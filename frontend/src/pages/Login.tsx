@@ -40,6 +40,7 @@ const Login: React.FC = () => {
 
             const { data } = await api.post(endpoint, payload);
 
+            localStorage.setItem('@Famask:token', data.token);
             localStorage.setItem('@Famask:user', JSON.stringify(data.user));
             loadUser();
             navigate('/');

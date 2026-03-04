@@ -37,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (e) {
             console.error(e);
         }
+        localStorage.removeItem('@Famask:token');
         localStorage.removeItem('@Famask:user');
         setUser(null);
     };

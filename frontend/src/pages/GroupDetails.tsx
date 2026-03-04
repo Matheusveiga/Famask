@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 interface GroupData {
     id: string;
@@ -37,6 +38,7 @@ const AVATAR_MAP: Record<string, string> = {
 const GroupDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const [tasks, setTasks] = useState<Task[]>([]);
     const [rewards, setRewards] = useState<Reward[]>([]);
@@ -258,29 +260,58 @@ const GroupDetails: React.FC = () => {
         );
     };
 
+    const handleDeleteGroup = () => {
+        openConfirm(
+            'Deletar Família Inteira',
+            'ATENÇÃO: Você está prestes a deletar completamente este grupo. Todas as tarefas, recompensas e pontuações serão apagadas permanentemente. Deseja continuar?',
+            async () => {
+                try {
+                    await api.delete(`/api/groups/${id}`);
+                    toast.success('Família deletada permanentemente.');
+                    navigate('/');
+                } catch (err: any) {
+                    toast.error(err.response?.data?.error || 'Erro ao deletar família. (Apenas Admins)');
+                    closeConfirm();
+                }
+            }
+        );
+    };
+
     return (
         <div style={{ padding: '40px 20px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-            <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '40px' }}>
+            <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '40px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <button className="btn btn-secondary" onClick={() => navigate('/')} style={{ padding: '8px' }}>
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="title" style={{ fontSize: '1.8rem', margin: 0 }}>Tarefas do Grupo</h1>
+                        <h1 className="title" style={{ fontSize: '1.8rem', margin: 0 }}>Tarefas da Família</h1>
                     </div>
                 </div>
 
-                <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                        if (id) {
-                            navigator.clipboard.writeText(id);
-                            toast.success('ID copiado! Envie para o novo membro.');
-                        }
-                    }}
-                >
-                    <Copy size={16} /> Copiar ID para Convite
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => {
+                            if (id) {
+                                navigator.clipboard.writeText(id);
+                                toast.success('ID copiado! Envie para o novo membro.');
+                            }
+                        }}
+                    >
+                        <Copy size={16} /> Copiar ID para Convite
+                    </button>
+                    {groupData?.members.find(m => m.user.id === user?.id && m.role === 'Admin') && (
+                        <button
+                            className="btn"
+                            style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                            onClick={handleDeleteGroup}
+                            title="Deletar Família"
+                        >
+                            <Trash2 size={16} /> Deletar
+                        </button>
+                    )}
+                </div>
             </header>
 
             {/* Gamification Leaderboard */}

@@ -185,4 +185,28 @@ router.post('/join', async (req: AuthRequest, res: Response) => {
     }
 });
 
+router.delete('/:groupId', async (req: AuthRequest, res: Response) => {
+    try {
+        const groupId = req.params.groupId as string;
+        const userId = req.user!.userId;
+
+        const membership = await prisma.groupMember.findUnique({
+            where: { userId_groupId: { userId, groupId } },
+        });
+
+        if (!membership || membership.role !== 'Admin') {
+            return res.status(403).json({ error: 'Apenas administradores podem deletar a família.' });
+        }
+
+        await prisma.familyGroup.delete({
+            where: { id: groupId }
+        });
+
+        res.json({ success: true, message: 'Família deletada com sucesso.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao deletar grupo.' });
+    }
+});
+
 export default router;

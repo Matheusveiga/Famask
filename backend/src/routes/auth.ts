@@ -44,7 +44,7 @@ router.post('/register', async (req, res) => {
             maxAge: 365 * 24 * 60 * 60 * 1000 // 365 days
         });
 
-        res.status(201).json({ user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar } });
+        res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar } });
     } catch (error) {
         if (error instanceof z.ZodError) {
             return res.status(400).json({ error: (error as any).errors });
@@ -78,7 +78,7 @@ router.post('/login', async (req, res) => {
             maxAge: 365 * 24 * 60 * 60 * 1000
         });
 
-        res.json({ user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar } });
+        res.json({ token, user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar } });
     } catch (error) {
         if (error instanceof z.ZodError) {
             return res.status(400).json({ error: (error as any).errors });
