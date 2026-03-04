@@ -44,12 +44,14 @@ const Login: React.FC = () => {
             localStorage.setItem('@Famask:user', JSON.stringify(data.user));
             loadUser();
             navigate('/');
-        } catch (err: any) {
-            if (err.response?.data?.error) {
-                if (Array.isArray(err.response.data.error)) {
+        } catch (err: unknown) {
+            const errorObj = err as { response?: { data?: { error?: string | string[] } } };
+            const apiError = errorObj.response?.data?.error;
+            if (apiError) {
+                if (Array.isArray(apiError)) {
                     setError('Dados inválidos. Verifique os campos.');
                 } else {
-                    setError(err.response.data.error);
+                    setError(apiError);
                 }
             } else {
                 setError('Erro na conexão com o servidor.');

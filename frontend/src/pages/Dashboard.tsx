@@ -11,6 +11,11 @@ interface Group {
     members: Array<{ user: { id: string; name: string } }>;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => void;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 const AVATAR_MAP: Record<string, string> = {
     fox: '🦊', cat: '🐱', dog: '🐶', panda: '🐼', koala: '🐨',
     lion: '🦁', tiger: '🐯', monkey: '🐵', unicorn: '🦄', alien: '👽'
@@ -27,13 +32,13 @@ const Dashboard: React.FC = () => {
     const [joining, setJoining] = useState(false);
 
     // PWA Install Logic
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [showInstallBtn, setShowInstallBtn] = useState(false);
 
     useEffect(() => {
-        const handler = (e: any) => {
+        const handler = (e: Event) => {
             e.preventDefault();
-            setDeferredPrompt(e);
+            setDeferredPrompt(e as BeforeInstallPromptEvent);
             setShowInstallBtn(true);
         };
         window.addEventListener('beforeinstallprompt', handler);
@@ -76,9 +81,9 @@ const Dashboard: React.FC = () => {
             const { data } = await api.post('/api/groups', { name: newGroupName });
             toast.success('Grupo criado com sucesso!');
             navigate(`/group/${data.id}`);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            const message = err.response?.data?.error || 'Erro ao criar grupo.';
+            const message = (err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao criar grupo.';
             toast.error(message);
         } finally {
             setCreating(false);
@@ -94,8 +99,8 @@ const Dashboard: React.FC = () => {
             const { data } = await api.post('/api/groups/join', { inviteCode: joinCode.trim().toUpperCase() });
             navigate(`/group/${data.groupId}`);
             toast.success('Entrou na Família com sucesso!');
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Erro ao entrar. Verifique o código.');
+        } catch (err: unknown) {
+            toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao entrar. Verifique o código.');
         } finally {
             setJoining(false);
         }

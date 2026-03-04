@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import api from '../services/api';
 
 export interface User {
@@ -41,10 +41,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('@Famask:user');
         setUser(null);
     };
-
-    useEffect(() => {
-        loadUser();
-    }, []);
 
     return (
         <AuthContext.Provider value={{ user, loadUser, logout }}>

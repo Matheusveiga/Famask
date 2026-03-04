@@ -95,10 +95,11 @@ const GroupDetails: React.FC = () => {
             setTasks(tasksRes.data);
             setGroupData(groupRes.data);
             setRewards(rewardsRes.data);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            const status = err.response?.status;
-            const errorMsg = err.response?.data?.error || 'Erro ao carregar dados.';
+            const errorObj = err as { response?: { status?: number, data?: { error?: string } } };
+            const status = errorObj.response?.status;
+            const errorMsg = errorObj.response?.data?.error || 'Erro ao carregar dados.';
 
             toast.error(`Falha: ${errorMsg} (${status})`);
 
@@ -112,7 +113,7 @@ const GroupDetails: React.FC = () => {
 
     useEffect(() => {
         if (id) fetchTasks();
-    }, [id]);
+    }, [id]); // fetchTasks is stable across re-renders conceptually, but not literally unless wrapped in useCallback. Ignoring eslint warning since adding it causes infinite loops if not useCallbacked.
 
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -204,8 +205,8 @@ const GroupDetails: React.FC = () => {
             await api.post(`/api/groups/${id}/members`, { email: newMemberEmail });
             setNewMemberEmail('');
             toast.success('Membro adicionado!');
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Erro ao adicionar membro.');
+        } catch (err: unknown) {
+            toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao adicionar membro.');
         }
     };
 
@@ -220,8 +221,8 @@ const GroupDetails: React.FC = () => {
             setNewRewardPoints(50);
             setShowRewardForm(false);
             fetchTasks();
-        } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Erro ao criar.');
+        } catch (err: unknown) {
+            toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao criar.');
         }
     };
 
@@ -235,8 +236,8 @@ const GroupDetails: React.FC = () => {
                     toast.success('Recompensa resgatada com sucesso!');
                     fetchTasks();
                     closeConfirm();
-                } catch (err: any) {
-                    toast.error(err.response?.data?.error || 'Erro no resgate.');
+                } catch (err: unknown) {
+                    toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro no resgate.');
                     closeConfirm();
                 }
             }
@@ -253,8 +254,8 @@ const GroupDetails: React.FC = () => {
                     fetchTasks();
                     toast.success('Recompensa excluída.');
                     closeConfirm();
-                } catch (err: any) {
-                    toast.error(err.response?.data?.error || 'Erro ao deletar recompensa.');
+                } catch (err: unknown) {
+                    toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao deletar recompensa.');
                     closeConfirm();
                 }
             }
@@ -270,8 +271,8 @@ const GroupDetails: React.FC = () => {
                     await api.delete(`/api/groups/${id}`);
                     toast.success('Família deletada permanentemente.');
                     navigate('/');
-                } catch (err: any) {
-                    toast.error(err.response?.data?.error || 'Erro ao deletar família. (Apenas Admins)');
+                } catch (err: unknown) {
+                    toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao deletar família. (Apenas Admins)');
                     closeConfirm();
                 }
             }
