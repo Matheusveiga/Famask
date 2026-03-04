@@ -40,6 +40,7 @@ router.post('/register', async (req, res) => {
             httpOnly: true,
             secure: true, // Always true for HTTPS in cloud
             sameSite: 'none',
+            partitioned: true, // Fix Chrome 3rd-party cookie warning
             maxAge: 365 * 24 * 60 * 60 * 1000 // 365 days
         });
 
@@ -73,6 +74,7 @@ router.post('/login', async (req, res) => {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
+            partitioned: true,
             maxAge: 365 * 24 * 60 * 60 * 1000
         });
 
@@ -90,7 +92,8 @@ router.post('/logout', (req, res) => {
     res.clearCookie('token', {
         httpOnly: true,
         secure: true,
-        sameSite: 'none'
+        sameSite: 'none',
+        partitioned: true
     });
     res.json({ message: 'Logout realizado.' });
 });
