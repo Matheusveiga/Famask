@@ -148,7 +148,7 @@ router.post('/:groupId/members', async (req: AuthRequest, res: Response) => {
 });
 
 const joinSchema = z.object({
-    groupId: z.string().uuid(),
+    groupId: z.string(),
 });
 
 router.post('/join', async (req: AuthRequest, res: Response) => {
