@@ -1,0 +1,172 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const zod_1 = require("zod");
+const prisma_1 = __importDefault(require("../prisma"));
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.use(auth_1.authenticateToken);
+const groupSchema = zod_1.z.object({
+    name: zod_1.z.string().min(2),
+});
+const addMemberSchema = zod_1.z.object({
+    email: zod_1.z.string().email(),
+});
+router.post('/', async (req, res) => {
+    try {
+        const { name } = groupSchema.parse(req.body);
+        const userId = req.user.userId;
+        const group = await prisma_1.default.familyGroup.create({
+            data: {
+                name,
+                createdBy: userId,
+                members: {
+                    create: {
+                        userId,
+                        role: 'Admin',
+                    },
+                },
+            },
+        });
+        res.status(201).json(group);
+    }
+    catch (error) {
+        if (error instanceof zod_1.z.ZodError) {
+            return res.status(400).json({ error: error.errors });
+        }
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao criar grupo.' });
+    }
+});
+router.get('/', async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const groups = await prisma_1.default.familyGroup.findMany({
+            where: {
+                members: {
+                    some: { userId },
+                },
+            },
+            include: {
+                members: {
+                    include: {
+                        user: { select: { id: true, name: true, email: true } },
+                    },
+                },
+            },
+        });
+        res.json(groups);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao buscar grupos.' });
+    }
+});
+router.get('/:groupId', async (req, res) => {
+    try {
+        const groupId = req.params.groupId;
+        const userId = req.user.userId;
+        const group = await prisma_1.default.familyGroup.findUnique({
+            where: { id: groupId },
+            include: {
+                members: {
+                    include: { user: { select: { id: true, name: true, email: true } } }
+                },
+            },
+        });
+        if (!group)
+            return res.status(404).json({ error: 'Grupo não encontrado.' });
+        // Find if user is a member
+        const isMember = group.members.some((m) => m.userId === userId);
+        if (!isMember) {
+            return res.status(403).json({ error: 'Acesso negado.' });
+        }
+        // Sort members by score in JS to bypass Prisma TS Cache issues
+        group.members.sort((a, b) => b.score - a.score);
+        res.json(group);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao buscar dados do grupo.' });
+    }
+});
+router.post('/:groupId/members', async (req, res) => {
+    try {
+        const { email } = addMemberSchema.parse(req.body);
+        const groupId = req.params.groupId;
+        const adminId = req.user.userId;
+        // Verify if caller is admin of this group
+        const membership = await prisma_1.default.groupMember.findUnique({
+            where: { userId_groupId: { userId: adminId, groupId } },
+        });
+        if (!membership || membership.role !== 'Admin') {
+            return res.status(403).json({ error: 'Apenas administradores podem adicionar membros.' });
+        }
+        const userToAdd = await prisma_1.default.user.findUnique({ where: { email } });
+        if (!userToAdd) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+        const existingMember = await prisma_1.default.groupMember.findUnique({
+            where: { userId_groupId: { userId: userToAdd.id, groupId } },
+        });
+        if (existingMember) {
+            return res.status(400).json({ error: 'Usuário já é membro.' });
+        }
+        const newMember = await prisma_1.default.groupMember.create({
+            data: {
+                userId: userToAdd.id,
+                groupId,
+                role: 'Member',
+            },
+            include: {
+                user: { select: { id: true, name: true, email: true } },
+            },
+        });
+        res.status(201).json(newMember);
+    }
+    catch (error) {
+        if (error instanceof zod_1.z.ZodError) {
+            return res.status(400).json({ error: error.errors });
+        }
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao adicionar membro.' });
+    }
+});
+const joinSchema = zod_1.z.object({
+    groupId: zod_1.z.string().uuid(),
+});
+router.post('/join', async (req, res) => {
+    try {
+        const { groupId } = joinSchema.parse(req.body);
+        const userId = req.user.userId;
+        const group = await prisma_1.default.familyGroup.findUnique({ where: { id: groupId } });
+        if (!group)
+            return res.status(404).json({ error: 'Grupo não encontrado.' });
+        const existingMember = await prisma_1.default.groupMember.findUnique({
+            where: { userId_groupId: { userId, groupId } },
+        });
+        if (existingMember)
+            return res.status(400).json({ error: 'Você já é membro deste grupo.' });
+        // Add user to the group
+        const newMember = await prisma_1.default.groupMember.create({
+            data: {
+                userId,
+                groupId,
+                role: 'Member',
+            },
+            include: { group: true },
+        });
+        res.status(201).json(newMember);
+    }
+    catch (error) {
+        if (error instanceof zod_1.z.ZodError) {
+            return res.status(400).json({ error: error.errors });
+        }
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao entrar no grupo.' });
+    }
+});
+exports.default = router;

@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  avatar       String?       // "fox", "bear", "cat", etc.
+  createdAt    DateTime      @default(now())
+  
+  ownedGroups  FamilyGroup[] @relation("GroupOwner")
+  memberships  GroupMember[]
+  tasksCreated Task[]        @relation("TaskCreator")
+  tasksDone    Task[]        @relation("TaskCompleter")
+  rewardsClaimed RewardClaim[]
+}
+
+model FamilyGroup {
+  id        String   @id @default(uuid())
+  name      String
+  createdBy String
+  createdAt DateTime @default(now())
+
+  owner     User     @relation("GroupOwner", fields: [createdBy], references: [id])
+  members   GroupMember[]
+  tasks     Task[]
+  rewards   Reward[]
+}
+
+model GroupMember {
+  userId  String
+  groupId String
+  role    String   // "Admin", "Member", "Child"
+  score   Int      @default(0)
+
+  user    User        @relation(fields: [userId], references: [id])
+  group   FamilyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  groupId     String
+  createdBy   String
+  title       String
+  description String?
+  category    String?   @default("geral") // "Limpeza", "Mercado", "Escola"
+  isCompleted Boolean   @default(false)
+  completedBy String?
+  createdAt   DateTime  @default(now())
+  dueDate     DateTime?
+  isDaily     Boolean   @default(false)
+  points      Int       @default(10)
+
+  group       FamilyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator     User        @relation("TaskCreator", fields: [createdBy], references: [id])
+  completer   User?       @relation("TaskCompleter", fields: [completedBy], references: [id])
+  subtasks    Subtask[]
+}
+
+model Subtask {
+  id          String    @id @default(uuid())
+  taskId      String
+  title       String
+  isCompleted Boolean   @default(false)
+  
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Reward {
+  id          String    @id @default(uuid())
+  groupId     String
+  title       String
+  pointsCost  Int
+  createdAt   DateTime  @default(now())
+  
+  group       FamilyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  claims      RewardClaim[]
+}
+
+model RewardClaim {
+  id          String    @id @default(uuid())
+  rewardId    String
+  userId      String
+  claimedAt   DateTime  @default(now())
+  
+  reward      Reward    @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
