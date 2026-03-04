@@ -271,15 +271,15 @@ const GroupDetails: React.FC = () => {
 
     const handleDeleteGroup = () => {
         openConfirm(
-            'Deletar Família Inteira',
+            'Deletar Grupo Inteiro',
             'ATENÇÃO: Você está prestes a deletar completamente este grupo. Todas as tarefas, recompensas e pontuações serão apagadas permanentemente. Deseja continuar?',
             async () => {
                 try {
                     await api.delete(`/api/groups/${id}`);
-                    toast.success('Família deletada permanentemente.');
+                    toast.success('Grupo deletado permanentemente.');
                     navigate('/');
                 } catch (err: unknown) {
-                    toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao deletar família. (Apenas Admins)');
+                    toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao deletar grupo. (Apenas Admins)');
                     closeConfirm();
                 }
             }
@@ -294,7 +294,7 @@ const GroupDetails: React.FC = () => {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="title" style={{ fontSize: '1.8rem', margin: 0 }}>Tarefas da Família</h1>
+                        <h1 className="title" style={{ fontSize: '1.8rem', margin: 0 }}>Tarefas do Grupo</h1>
                     </div>
                 </div>
 
@@ -315,9 +315,9 @@ const GroupDetails: React.FC = () => {
                             className="btn"
                             style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
                             onClick={handleDeleteGroup}
-                            title="Deletar Família"
+                            title="Deletar Grupo"
                         >
-                            <Trash2 size={16} /> Deletar
+                            <Trash2 size={16} /> Deletar Grupo
                         </button>
                     )}
                 </div>
@@ -380,7 +380,7 @@ const GroupDetails: React.FC = () => {
                 )}
 
                 {rewards.length === 0 ? (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Nenhuma recompensa cadastrada. Crie uma para engajar a família!</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Nenhuma recompensa cadastrada. Crie uma para motivar o grupo!</p>
                 ) : (
                     <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
                         {rewards.map(reward => (
@@ -485,7 +485,7 @@ const GroupDetails: React.FC = () => {
                         <CheckSquare size={48} color="var(--primary)" style={{ opacity: 0.5, marginBottom: '16px' }} />
                         <h3 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>Tudo limpo por aqui!</h3>
                         <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto' }}>
-                            Ainda não há tarefas criadas nesta família. Comece adicionando uma no campo acima para gerar pontos!
+                            Ainda não há tarefas criadas neste grupo. Comece adicionando uma no campo acima para gerar pontos!
                         </p>
                     </div>
                 ) : (

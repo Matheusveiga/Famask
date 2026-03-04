@@ -67,7 +67,7 @@ const Login: React.FC = () => {
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                     <h1 className="title" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Famask</h1>
                     <p className="subtitle" style={{ fontSize: '0.95rem', margin: 0 }}>
-                        {isLogin ? 'Bem-vindo de volta à sua família.' : 'Crie sua conta familiar.'}
+                        {isLogin ? 'Bem-vindo de volta ao seu grupo.' : 'Crie sua conta no grupo.'}
                     </p>
                 </div>
 

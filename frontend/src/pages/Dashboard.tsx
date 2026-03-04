@@ -98,7 +98,7 @@ const Dashboard: React.FC = () => {
         try {
             const { data } = await api.post('/api/groups/join', { inviteCode: joinCode.trim().toUpperCase() });
             navigate(`/group/${data.groupId}`);
-            toast.success('Entrou na Família com sucesso!');
+            toast.success('Entrou no Grupo com sucesso!');
         } catch (err: unknown) {
             toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao entrar. Verifique o código.');
         } finally {
@@ -124,7 +124,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <h1 className="title" style={{ margin: 0, fontSize: '2rem' }}>Meus Grupos Familiares</h1>
+                            <h1 className="title" style={{ margin: 0, fontSize: '2rem' }}>Meus Grupos</h1>
                             {showInstallBtn && (
                                 <button
                                     onClick={handleInstallClick}
@@ -169,7 +169,7 @@ const Dashboard: React.FC = () => {
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="Nome da Família"
+                            placeholder="Nome do Grupo (Ex: Casa, Projeto X)"
                             value={newGroupName}
                             onChange={e => setNewGroupName(e.target.value)}
                             required
@@ -194,7 +194,7 @@ const Dashboard: React.FC = () => {
                             required
                         />
                         <button type="submit" className="btn btn-secondary" disabled={joining} style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)' }}>
-                            <Users size={18} /> Entrar na Família
+                            <Users size={18} /> Entrar no Grupo
                         </button>
                     </form>
                 </div>
@@ -211,9 +211,9 @@ const Dashboard: React.FC = () => {
                     border: '1px dashed var(--border-color)'
                 }}>
                     <Home size={48} color="var(--text-secondary)" style={{ opacity: 0.5, marginBottom: '16px' }} />
-                    <h3 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>Nenhuma família encontrada</h3>
+                    <h3 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>Nenhum grupo encontrado</h3>
                     <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto' }}>
-                        Crie um novo grupo acima ou peça o ID de convite para um membro de uma família já existente.
+                        Crie um novo grupo acima ou peça o código de convite para participar de um grupo existente.
                     </p>
                 </div>
             ) : (
