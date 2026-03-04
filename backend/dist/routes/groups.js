@@ -19,9 +19,15 @@ router.post('/', async (req, res) => {
     try {
         const { name } = groupSchema.parse(req.body);
         const userId = req.user.userId;
+        const generateCode = () => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            return Array.from({ length: 6 }).map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+        };
+        const inviteCode = generateCode();
         const group = await prisma_1.default.familyGroup.create({
             data: {
                 name,
+                inviteCode,
                 createdBy: userId,
                 members: {
                     create: {
@@ -136,15 +142,16 @@ router.post('/:groupId/members', async (req, res) => {
     }
 });
 const joinSchema = zod_1.z.object({
-    groupId: zod_1.z.string().uuid(),
+    inviteCode: zod_1.z.string().min(6),
 });
 router.post('/join', async (req, res) => {
     try {
-        const { groupId } = joinSchema.parse(req.body);
+        const { inviteCode } = joinSchema.parse(req.body);
         const userId = req.user.userId;
-        const group = await prisma_1.default.familyGroup.findUnique({ where: { id: groupId } });
+        const group = await prisma_1.default.familyGroup.findUnique({ where: { inviteCode } });
         if (!group)
-            return res.status(404).json({ error: 'Grupo não encontrado.' });
+            return res.status(404).json({ error: 'Código de convite inválido ou Família não encontrada.' });
+        const groupId = group.id;
         const existingMember = await prisma_1.default.groupMember.findUnique({
             where: { userId_groupId: { userId, groupId } },
         });
@@ -167,6 +174,26 @@ router.post('/join', async (req, res) => {
         }
         console.error(error);
         res.status(500).json({ error: 'Erro ao entrar no grupo.' });
+    }
+});
+router.delete('/:groupId', async (req, res) => {
+    try {
+        const groupId = req.params.groupId;
+        const userId = req.user.userId;
+        const membership = await prisma_1.default.groupMember.findUnique({
+            where: { userId_groupId: { userId, groupId } },
+        });
+        if (!membership || membership.role !== 'Admin') {
+            return res.status(403).json({ error: 'Apenas administradores podem deletar a família.' });
+        }
+        await prisma_1.default.familyGroup.delete({
+            where: { id: groupId }
+        });
+        res.json({ success: true, message: 'Família deletada com sucesso.' });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao deletar grupo.' });
     }
 });
 exports.default = router;

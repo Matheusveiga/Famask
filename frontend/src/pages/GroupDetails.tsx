@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 
 interface GroupData {
     id: string;
+    inviteCode: string;
     name: string;
     members: Array<{ score: number; role: string; user: { id: string; name: string, avatar?: string } }>;
 }
@@ -293,13 +294,13 @@ const GroupDetails: React.FC = () => {
                     <button
                         className="btn btn-secondary"
                         onClick={() => {
-                            if (id) {
-                                navigator.clipboard.writeText(id);
-                                toast.success('ID copiado! Envie para o novo membro.');
+                            if (groupData?.inviteCode) {
+                                navigator.clipboard.writeText(groupData.inviteCode);
+                                toast.success('Código criado com 6 dígitos copiado!');
                             }
                         }}
                     >
-                        <Copy size={16} /> Copiar ID para Convite
+                        <Copy size={16} /> Código de Convite
                     </button>
                     {groupData?.members.find(m => m.user.id === user?.id && m.role === 'Admin') && (
                         <button

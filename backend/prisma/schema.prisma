@@ -27,10 +27,11 @@ model User {
 }
 
 model FamilyGroup {
-  id        String   @id @default(uuid())
-  name      String
-  createdBy String
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  inviteCode String   @unique @default(uuid())
+  name       String
+  createdBy  String
+  createdAt  DateTime @default(now())
 
   owner     User     @relation("GroupOwner", fields: [createdBy], references: [id])
   members   GroupMember[]

@@ -17,7 +17,7 @@ const app = (0, express_1.default)();
 const prisma = new client_1.PrismaClient();
 const PORT = process.env.PORT || 3000;
 app.use((0, cors_1.default)({
-    origin: 'http://localhost:5173', // Vite default port
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true
 }));
 app.use(express_1.default.json());

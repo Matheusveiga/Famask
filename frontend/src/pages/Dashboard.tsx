@@ -23,7 +23,7 @@ const Dashboard: React.FC = () => {
     const [newGroupName, setNewGroupName] = useState('');
     const [creating, setCreating] = useState(false);
 
-    const [joinGroupId, setJoinGroupId] = useState('');
+    const [joinCode, setJoinCode] = useState('');
     const [joining, setJoining] = useState(false);
 
     // PWA Install Logic
@@ -87,15 +87,15 @@ const Dashboard: React.FC = () => {
 
     const handleJoinGroup = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!joinGroupId.trim()) return;
+        if (!joinCode.trim()) return;
 
         setJoining(true);
         try {
-            const { data } = await api.post('/api/groups/join', { groupId: joinGroupId.trim() });
+            const { data } = await api.post('/api/groups/join', { inviteCode: joinCode.trim().toUpperCase() });
             navigate(`/group/${data.groupId}`);
-            toast.success('Entrou no grupo com sucesso!');
+            toast.success('Entrou na Família com sucesso!');
         } catch (err: any) {
-            toast.error(err.response?.data?.error || 'Erro ao entrar no grupo. Verifique o ID.');
+            toast.error(err.response?.data?.error || 'Erro ao entrar. Verifique o código.');
         } finally {
             setJoining(false);
         }
@@ -177,18 +177,19 @@ const Dashboard: React.FC = () => {
 
                 {/* Join Group Card */}
                 <div className="glass glass-card animate-in" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', animationDelay: '0.05s' }}>
-                    <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Entrar com ID da Família</h3>
+                    <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Tem um código de Convite?</h3>
                     <form onSubmit={handleJoinGroup} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="Cole o ID da Família aqui"
-                            value={joinGroupId}
-                            onChange={e => setJoinGroupId(e.target.value)}
+                            placeholder="Ex: ABC123"
+                            value={joinCode}
+                            onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                            maxLength={6}
                             required
                         />
                         <button type="submit" className="btn btn-secondary" disabled={joining} style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)' }}>
-                            <Users size={18} /> Entrar
+                            <Users size={18} /> Entrar na Família
                         </button>
                     </form>
                 </div>

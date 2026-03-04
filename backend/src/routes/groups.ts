@@ -19,9 +19,16 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         const { name } = groupSchema.parse(req.body);
         const userId = req.user!.userId;
 
+        const generateCode = () => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            return Array.from({ length: 6 }).map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+        };
+        const inviteCode = generateCode();
+
         const group = await prisma.familyGroup.create({
             data: {
                 name,
+                inviteCode,
                 createdBy: userId,
                 members: {
                     create: {
@@ -148,16 +155,18 @@ router.post('/:groupId/members', async (req: AuthRequest, res: Response) => {
 });
 
 const joinSchema = z.object({
-    groupId: z.string(),
+    inviteCode: z.string().min(6),
 });
 
 router.post('/join', async (req: AuthRequest, res: Response) => {
     try {
-        const { groupId } = joinSchema.parse(req.body);
+        const { inviteCode } = joinSchema.parse(req.body);
         const userId = req.user!.userId;
 
-        const group = await prisma.familyGroup.findUnique({ where: { id: groupId } });
-        if (!group) return res.status(404).json({ error: 'Grupo não encontrado.' });
+        const group = await prisma.familyGroup.findUnique({ where: { inviteCode } });
+        if (!group) return res.status(404).json({ error: 'Código de convite inválido ou Família não encontrada.' });
+
+        const groupId = group.id;
 
         const existingMember = await prisma.groupMember.findUnique({
             where: { userId_groupId: { userId, groupId } },
