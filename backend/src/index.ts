@@ -6,9 +6,10 @@ import cron from 'node-cron';
 import { PrismaClient } from '@prisma/client';
 
 import authRoutes from './routes/auth';
-import groupRoutes from './routes/groups';
-import taskRoutes from './routes/tasks';
-import rewardRoutes from './routes/rewards';
+import groupsRouter from './routes/groups';
+import tasksRouter from './routes/tasks';
+import rewardsRouter from './routes/rewards';
+import notifRouter from './routes/notifications';
 
 dotenv.config();
 
@@ -25,9 +26,10 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/groups', groupRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/rewards', rewardRoutes);
+app.use('/api/groups', groupsRouter);
+app.use('/api/tasks', tasksRouter);
+app.use('/api/rewards', rewardsRouter);
+app.use('/api/notifications', notifRouter);
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Famask API is running' });

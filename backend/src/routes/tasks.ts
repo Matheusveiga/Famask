@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../prisma';
+import webpush from 'web-push';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
@@ -22,6 +23,36 @@ const updateTaskSchema = z.object({
     isDaily: z.boolean().optional(),
     points: z.number().optional(),
 });
+
+// Helper for broadcasting Push Notifications
+async function broadcastToGroup(groupId: string, excludeUserId: string, payload: any) {
+    try {
+        const members = await prisma.groupMember.findMany({
+            where: { groupId, userId: { not: excludeUserId } },
+            select: { userId: true }
+        });
+
+        const userIds = members.map(m => m.userId);
+        if (userIds.length === 0) return;
+
+        const subscriptions = await prisma.pushSubscription.findMany({
+            where: { userId: { in: userIds } }
+        });
+
+        const pushPayload = JSON.stringify(payload);
+
+        await Promise.allSettled(
+            subscriptions.map(sub =>
+                webpush.sendNotification(
+                    { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                    pushPayload
+                )
+            )
+        );
+    } catch (e) {
+        console.error("Failed to broadcast push notification", e);
+    }
+}
 
 // Create task
 router.post('/', async (req: AuthRequest, res: Response) => {
@@ -48,7 +79,16 @@ router.post('/', async (req: AuthRequest, res: Response) => {
                 isDaily: isDaily ?? false,
                 points: points ?? 10,
             },
+            include: { creator: { select: { name: true } } }
         });
+
+        // Fire & Forget Notification
+        broadcastToGroup(groupId, userId, {
+            title: 'Nova Tarefa no Grupo!',
+            body: `${task.creator.name} adicionou: ${task.title}`,
+            url: `/group/${groupId}`
+        });
+
         res.status(201).json(task);
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -147,6 +187,16 @@ router.patch('/:taskId', async (req: AuthRequest, res: Response) => {
         }
 
         const [updatedTask] = await prisma.$transaction(transaction);
+
+        // Fire & Forget Notification for Completion
+        if (isStatusChanging && isCompleted) {
+            const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+            broadcastToGroup(updatedTask.groupId, userId, {
+                title: 'Tarefa Concluída! 🏆',
+                body: `${user?.name} concluiu: ${updatedTask.title} (+${pointDelta}pts)`,
+                url: `/group/${updatedTask.groupId}`
+            });
+        }
 
         res.json(updatedTask);
     } catch (error) {

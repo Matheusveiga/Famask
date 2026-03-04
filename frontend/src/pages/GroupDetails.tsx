@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -64,6 +64,9 @@ const GroupDetails: React.FC = () => {
     const [addingSubtaskTo, setAddingSubtaskTo] = useState<string | null>(null);
     const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
 
+    // Push Notifications State
+    const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+
     // Custom Confirmation Modal
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
@@ -95,6 +98,8 @@ const GroupDetails: React.FC = () => {
             setTasks(tasksRes.data);
             setGroupData(groupRes.data);
             setRewards(rewardsRes.data);
+
+            checkPushSubscription();
         } catch (err: unknown) {
             console.error(err);
             const errorObj = err as { response?: { status?: number, data?: { error?: string } } };
@@ -140,6 +145,59 @@ const GroupDetails: React.FC = () => {
             fetchTasks();
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    // Web Push Logic
+    const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    };
+
+    const checkPushSubscription = async () => {
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            const registration = await navigator.serviceWorker.ready;
+            const existingSubscription = await registration.pushManager.getSubscription();
+            setIsPushSubscribed(existingSubscription !== null);
+        }
+    };
+
+    const handleSubscribePush = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            toast.error('O seu navegador não suporta notificações Push.');
+            return;
+        }
+
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                toast.error('Você bloqueou as permissões de notificação.');
+                return;
+            }
+
+            const registration = await navigator.serviceWorker.ready;
+
+            let subscription = await registration.pushManager.getSubscription();
+            if (!subscription) {
+                const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+                });
+            }
+
+            await api.post('/api/notifications/subscribe', subscription.toJSON());
+            setIsPushSubscribed(true);
+            toast.success('Notificações ativadas com sucesso! 🔔');
+        } catch (err) {
+            console.error('Failed to subscribe to push', err);
+            toast.error('Falha ao ativar notificações. (VAPID Key / SW Error)');
         }
     };
 
@@ -299,6 +357,14 @@ const GroupDetails: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                        className={`btn ${isPushSubscribed ? 'btn-primary' : 'btn-secondary'}`}
+                        onClick={handleSubscribePush}
+                        title={isPushSubscribed ? "Notificações Ativadas" : "Ativar Notificações"}
+                    >
+                        {isPushSubscribed ? <Bell size={16} /> : <BellOff size={16} opacity={0.6} />}
+                        {isPushSubscribed ? 'Alertas On' : 'Alertas Off'}
+                    </button>
                     <button
                         className="btn btn-secondary"
                         onClick={() => {
