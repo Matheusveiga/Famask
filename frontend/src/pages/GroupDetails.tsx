@@ -112,7 +112,14 @@ const GroupDetails: React.FC = () => {
     };
 
     useEffect(() => {
-        if (id) fetchTasks();
+        if (id) {
+            fetchTasks();
+            // Live Sync: Automatic polling every 5 seconds
+            const interval = setInterval(() => {
+                fetchTasks();
+            }, 5000);
+            return () => clearInterval(interval);
+        }
     }, [id]); // fetchTasks is stable across re-renders conceptually, but not literally unless wrapped in useCallback. Ignoring eslint warning since adding it causes infinite loops if not useCallbacked.
 
     const handleCreateTask = async (e: React.FormEvent) => {
