@@ -9,9 +9,20 @@ const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
 const registerSchema = z.object({
-    name: z.string().min(2),
-    email: z.string().email(),
-    password: z.string().min(6),
+    name: z.string().min(2, 'O nome deve ter no mínimo 2 caracteres.'),
+    email: z.string().email('E-mail inválido.'),
+    password: z.string()
+        .min(6, 'A senha deve ter no mínimo 6 caracteres.')
+        .refine((val) => !/^(123456(789)?|password|senha123|qwerty)$/i.test(val), {
+            message: 'Esta senha é muito fraca ou comum.',
+        }),
+    birthDate: z.string().refine((val) => {
+        const date = new Date(val);
+        if (isNaN(date.getTime())) return false;
+        const ageDifMs = Date.now() - date.getTime();
+        const ageDate = new Date(ageDifMs);
+        return Math.abs(ageDate.getUTCFullYear() - 1970) >= 13;
+    }, { message: 'Você deve ter pelo menos 13 anos para se registrar.' }),
     avatar: z.string().optional(),
 });
 
@@ -22,7 +33,7 @@ const loginSchema = z.object({
 
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password, avatar } = registerSchema.parse(req.body);
+        const { name, email, password, birthDate, avatar } = registerSchema.parse(req.body);
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -31,7 +42,13 @@ router.post('/register', async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 10);
         const user = await prisma.user.create({
-            data: { name, email, passwordHash, avatar: avatar || 'fox' },
+            data: {
+                name,
+                email,
+                passwordHash,
+                birthDate: new Date(birthDate),
+                avatar: avatar || 'fox'
+            },
         });
 
         const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '365d' });

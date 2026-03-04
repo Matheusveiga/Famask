@@ -21,7 +21,9 @@ const Login: React.FC = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [name, setName] = useState('');
+    const [birthDate, setBirthDate] = useState('');
     const [avatar, setAvatar] = useState('fox');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -35,8 +37,14 @@ const Login: React.FC = () => {
         setLoading(true);
 
         try {
+            if (!isLogin && password !== confirmPassword) {
+                setError('As senhas não coincidem.');
+                setLoading(false);
+                return;
+            }
+
             const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-            const payload = isLogin ? { email, password } : { name, email, password, avatar };
+            const payload = isLogin ? { email, password } : { name, email, password, birthDate, avatar };
 
             const { data } = await api.post(endpoint, payload);
 
@@ -89,6 +97,17 @@ const Login: React.FC = () => {
                                     value={name}
                                     onChange={e => setName(e.target.value)}
                                     required={!isLogin}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Data de Nascimento (Obrigatório)</label>
+                                <input
+                                    type="date"
+                                    className="form-input"
+                                    value={birthDate}
+                                    onChange={e => setBirthDate(e.target.value)}
+                                    required={!isLogin}
+                                    max={new Date().toISOString().split('T')[0]}
                                 />
                             </div>
                             <div className="form-group">
@@ -147,6 +166,21 @@ const Login: React.FC = () => {
                         />
                     </div>
 
+                    {!isLogin && (
+                        <div className="form-group" style={{ marginBottom: '24px' }}>
+                            <label className="form-label">Confirme a Senha</label>
+                            <input
+                                type="password"
+                                className="form-input"
+                                placeholder="••••••••"
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                                required={!isLogin}
+                                minLength={6}
+                            />
+                        </div>
+                    )}
+
                     <button
                         type="submit"
                         className="btn btn-primary"
@@ -163,7 +197,12 @@ const Login: React.FC = () => {
                         type="button"
                         className="btn"
                         style={{ background: 'transparent', color: 'var(--text-secondary)', padding: 0 }}
-                        onClick={() => { setIsLogin(!isLogin); setError(''); }}
+                        onClick={() => {
+                            setIsLogin(!isLogin);
+                            setError('');
+                            setPassword('');
+                            setConfirmPassword('');
+                        }}
                     >
                         {isLogin ? 'Não tem uma conta? Registre-se.' : 'Já tem uma conta? Entre.'}
                     </button>

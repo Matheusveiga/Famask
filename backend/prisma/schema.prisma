@@ -17,6 +17,7 @@ model User {
   email        String        @unique
   passwordHash String
   avatar       String?       // "fox", "bear", "cat", etc.
+  birthDate    DateTime      @default(now()) // Stored as a UTC Date
   createdAt    DateTime      @default(now())
   
   ownedGroups  FamilyGroup[] @relation("GroupOwner")
