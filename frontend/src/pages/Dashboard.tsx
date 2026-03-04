@@ -74,9 +74,12 @@ const Dashboard: React.FC = () => {
         setCreating(true);
         try {
             const { data } = await api.post('/api/groups', { name: newGroupName });
+            toast.success('Grupo criado com sucesso!');
             navigate(`/group/${data.id}`);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
+            const message = err.response?.data?.error || 'Erro ao criar grupo.';
+            toast.error(message);
         } finally {
             setCreating(false);
         }
