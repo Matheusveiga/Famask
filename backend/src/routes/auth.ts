@@ -87,8 +87,25 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-    res.clearCookie('token');
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+    });
     res.json({ message: 'Logout realizado.' });
+});
+
+import { authenticateToken, AuthRequest } from '../middleware/auth';
+router.get('/whoami', authenticateToken as any, async (req: AuthRequest, res) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: req.user?.userId },
+            select: { id: true, name: true, email: true }
+        });
+        res.json({ jwt: req.user, db: user });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao verificar identidade.' });
+    }
 });
 
 export default router;

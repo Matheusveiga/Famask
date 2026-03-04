@@ -92,9 +92,16 @@ const GroupDetails: React.FC = () => {
             setTasks(tasksRes.data);
             setGroupData(groupRes.data);
             setRewards(rewardsRes.data);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            navigate('/');
+            const status = err.response?.status;
+            const errorMsg = err.response?.data?.error || 'Erro ao carregar dados.';
+
+            toast.error(`Falha: ${errorMsg} (${status})`);
+
+            if (status === 401 || status === 403) {
+                navigate('/');
+            }
         } finally {
             setLoading(false);
         }

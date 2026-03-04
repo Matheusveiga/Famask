@@ -1,9 +1,8 @@
-import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Router, Response } from 'express';
+import prisma from '../prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Create a new Reward
 router.post('/:groupId', authenticateToken as any, async (req: AuthRequest, res) => {
