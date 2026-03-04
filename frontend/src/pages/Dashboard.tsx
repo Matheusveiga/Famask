@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Users, LayoutDashboard, Home, ArrowRight, LogOut } from 'lucide-react';
+import { Plus, Users, LayoutDashboard, Home, ArrowRight, LogOut, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Group {
@@ -25,6 +25,30 @@ const Dashboard: React.FC = () => {
 
     const [joinGroupId, setJoinGroupId] = useState('');
     const [joining, setJoining] = useState(false);
+
+    // PWA Install Logic
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+    useEffect(() => {
+        const handler = (e: any) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+            setShowInstallBtn(true);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setShowInstallBtn(false);
+        }
+        setDeferredPrompt(null);
+    };
 
     const navigate = useNavigate();
 
@@ -91,7 +115,31 @@ const Dashboard: React.FC = () => {
                         <LayoutDashboard size={32} />
                     </div>
                     <div>
-                        <h1 className="title" style={{ margin: 0, fontSize: '2rem' }}>Meus Grupos Familiares</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <h1 className="title" style={{ margin: 0, fontSize: '2rem' }}>Meus Grupos Familiares</h1>
+                            {showInstallBtn && (
+                                <button
+                                    onClick={handleInstallClick}
+                                    className="animate-in"
+                                    style={{
+                                        background: 'var(--success)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '4px 12px',
+                                        borderRadius: '20px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 'bold',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
+                                    }}
+                                >
+                                    <Download size={14} /> Instalar App
+                                </button>
+                            )}
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                             <span style={{ fontSize: '1.4rem' }}>{user?.avatar ? AVATAR_MAP[user.avatar] : '👤'}</span>
                             <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '1.1rem' }}>
