@@ -150,14 +150,23 @@ const GroupDetails: React.FC = () => {
 
     // Web Push Logic
     const urlBase64ToUint8Array = (base64String: string) => {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
+        try {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        } catch (error) {
+            console.error('Base64 decode error:', error, 'String:', base64String);
+            throw new Error('Falha ao decodificar VAPID Key.');
         }
-        return outputArray;
     };
 
     const checkPushSubscription = async () => {
@@ -185,7 +194,9 @@ const GroupDetails: React.FC = () => {
 
             let subscription = await registration.pushManager.getSubscription();
             if (!subscription) {
-                const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+                const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY?.replace(/^"+|"+$/g, '');
+                if (!publicVapidKey) throw new Error("VAPID KEY MISSING");
+
                 subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
