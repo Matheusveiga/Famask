@@ -36,11 +36,10 @@ router.post('/register', async (req, res) => {
 
         const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '365d' });
 
-        // Setting HTTP-only cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // true if in prod
-            sameSite: 'strict',
+            secure: true, // Always true for HTTPS in cloud
+            sameSite: 'none',
             maxAge: 365 * 24 * 60 * 60 * 1000 // 365 days
         });
 
@@ -72,8 +71,8 @@ router.post('/login', async (req, res) => {
 
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: true,
+            sameSite: 'none',
             maxAge: 365 * 24 * 60 * 60 * 1000
         });
 
