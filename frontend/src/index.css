@@ -219,7 +219,7 @@ h4 {
 .task-category-block {
   background: rgba(30, 32, 40, 0.4) !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .task-category-block:hover {
