@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff, History, Home, ShoppingCart, BookOpen, Briefcase, Sparkles, Tag } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff, History, Home, ShoppingCart, BookOpen, Briefcase, Sparkles, Tag, Gift, Cat, Dog, Rabbit, Bird, Bug, Ghost, Snail, Squirrel, Turtle, Github } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -32,9 +32,17 @@ interface Task {
     subtasks?: Array<{ id: string; title: string; isCompleted: boolean }>;
 }
 
-const AVATAR_MAP: Record<string, string> = {
-    fox: '🦊', cat: '🐱', dog: '🐶', panda: '🐼', koala: '🐨',
-    lion: '🦁', tiger: '🐯', monkey: '🐵', unicorn: '🦄', alien: '👽'
+const AVATAR_MAP: Record<string, React.ReactNode> = {
+    fox: <Cat size={20} color="#f97316" />,
+    cat: <Cat size={20} color="#a8a29e" />,
+    dog: <Dog size={20} color="#d97706" />,
+    panda: <Bug size={20} color="#10b981" />,
+    koala: <Snail size={20} color="#8b5cf6" />,
+    lion: <Squirrel size={20} color="#f59e0b" />,
+    tiger: <Cat size={20} color="#ef4444" />,
+    monkey: <Github size={20} color="#6366f1" />,
+    unicorn: <Sparkles size={20} color="#ec4899" />,
+    alien: <Ghost size={20} color="#14b8a6" />
 };
 
 const GroupDetails: React.FC = () => {
@@ -470,7 +478,9 @@ const GroupDetails: React.FC = () => {
                     </div>
                     {groupData.members.map(member => (
                         <div key={member.user.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-sm)', whiteSpace: 'nowrap' }}>
-                            <span style={{ fontSize: '1.2rem' }}>{AVATAR_MAP[member.user.avatar || 'fox']}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }}>
+                                {AVATAR_MAP[member.user.avatar || 'fox']}
+                            </div>
                             <strong>{member.user.name}</strong>
                             <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{member.score} pts</span>
                             {groupData.members.find(m => m.user.id === user?.id && m.role === 'Admin') && member.user.id !== user?.id && (
@@ -491,7 +501,7 @@ const GroupDetails: React.FC = () => {
             <div className="glass glass-card animate-in" style={{ marginBottom: '32px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        🎁 Loja de Recompensas
+                        <Gift size={22} color="#ec4899" /> Loja de Recompensas
                     </h3>
                     <button className="btn btn-secondary" onClick={() => setShowRewardForm(!showRewardForm)} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
                         <Plus size={16} /> {showRewardForm ? 'Cancelar' : 'Nova (Admin)'}
@@ -772,8 +782,8 @@ const GroupDetails: React.FC = () => {
             </div>
 
             {/* Add Member Section */}
-            <div className="glass glass-card" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '16px' }}>Adicionar Membro (Apenas Admin)</h3>
+            <div className="glass glass-card animate-in" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><UserPlus size={20} color="var(--primary)" /> Adicionar Membro (Apenas Admin)</h3>
                 <form onSubmit={handleAddMember} style={{ display: 'flex', gap: '12px' }}>
                     <input
                         type="email"
