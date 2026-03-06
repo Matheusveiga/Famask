@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff, History } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -26,6 +26,7 @@ interface Task {
     isCompleted: boolean;
     isDaily: boolean;
     points: number;
+    createdAt: string;
     creator: { name: string };
     completer: { name: string } | null;
     subtasks?: Array<{ id: string; title: string; isCompleted: boolean }>;
@@ -66,6 +67,9 @@ const GroupDetails: React.FC = () => {
 
     // Push Notifications State
     const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+
+    // Logs State
+    const [showLogsModal, setShowLogsModal] = useState(false);
 
     // Custom Confirmation Modal
     const [confirmModal, setConfirmModal] = useState<{
@@ -355,8 +359,62 @@ const GroupDetails: React.FC = () => {
         );
     };
 
+    const handleDeleteMember = (memberId: string, memberName: string) => {
+        openConfirm(
+            'Remover Membro',
+            `Você tem certeza que deseja remover ${memberName} do grupo? O usuário perderá acesso, mas suas tarefas feitas não serão apagadas.`,
+            async () => {
+                try {
+                    await api.delete(`/api/groups/${id}/members/${memberId}`);
+                    toast.success(`${memberName} foi removido com sucesso.`);
+                    fetchTasks();
+                    closeConfirm();
+                } catch (err: unknown) {
+                    toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao remover membro.');
+                    closeConfirm();
+                }
+            }
+        );
+    };
+
     return (
         <div style={{ padding: '40px 20px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+            {/* Logs Modal */}
+            {showLogsModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 900, padding: '20px'
+                }}>
+                    <div className="glass glass-card animate-in" style={{ maxWidth: '600px', width: '100%', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><History size={20} /> Histórico de Tarefas</h3>
+                            <button onClick={() => setShowLogsModal(false)} className="btn btn-secondary" style={{ padding: '4px 12px' }}>✕ Fechar</button>
+                        </div>
+                        <div style={{ overflowY: 'auto', flex: 1, paddingRight: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {tasks.filter(t => t.isCompleted && t.completer).length === 0 ? (
+                                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', margin: '40px 0' }}>Nenhuma tarefa concluída recentemente.</p>
+                            ) : (
+                                tasks.filter(t => t.isCompleted && t.completer)
+                                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                                    .map(t => (
+                                        <div key={t.id} style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--success)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                                <strong style={{ color: 'var(--success)' }}>{t.completer?.name}</strong>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(t.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <div style={{ fontSize: '0.9rem' }}>
+                                                Concluiu a tarefa <strong>"{t.title}"</strong> e recebeu {t.points} pts.
+                                            </div>
+                                        </div>
+                                    ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '40px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <button className="btn btn-secondary" onClick={() => navigate('/')} style={{ padding: '8px' }}>
@@ -367,7 +425,10 @@ const GroupDetails: React.FC = () => {
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button className="btn btn-secondary" onClick={() => setShowLogsModal(true)} title="Histórico">
+                        <History size={16} /> Logs
+                    </button>
                     <button
                         className={`btn ${isPushSubscribed ? 'btn-primary' : 'btn-secondary'}`}
                         onClick={handleSubscribePush}
@@ -412,6 +473,15 @@ const GroupDetails: React.FC = () => {
                             <span style={{ fontSize: '1.2rem' }}>{AVATAR_MAP[member.user.avatar || 'fox']}</span>
                             <strong>{member.user.name}</strong>
                             <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{member.score} pts</span>
+                            {groupData.members.find(m => m.user.id === user?.id && m.role === 'Admin') && member.user.id !== user?.id && (
+                                <button
+                                    onClick={() => handleDeleteMember(member.user.id, member.user.name)}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', marginLeft: '8px', padding: '4px' }}
+                                    title="Remover Membro"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>

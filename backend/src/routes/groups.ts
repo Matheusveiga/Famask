@@ -218,4 +218,35 @@ router.delete('/:groupId', async (req: AuthRequest, res: Response) => {
     }
 });
 
+router.delete('/:groupId/members/:memberId', async (req: AuthRequest, res: Response) => {
+    try {
+        const groupId = req.params.groupId as string;
+        const memberId = req.params.memberId as string;
+        const adminId = req.user!.userId;
+
+        // Ensure caller is Admin
+        const membership = await prisma.groupMember.findUnique({
+            where: { userId_groupId: { userId: adminId, groupId } },
+        });
+
+        if (!membership || membership.role !== 'Admin') {
+            return res.status(403).json({ error: 'Apenas administradores podem remover membros.' });
+        }
+
+        // Prevent admin from removing themselves here if they are the only admin (optional logic, but basic is just delete)
+        if (adminId === memberId) {
+            return res.status(400).json({ error: 'Você não pode remover a si mesmo por aqui.' });
+        }
+
+        await prisma.groupMember.delete({
+            where: { userId_groupId: { userId: memberId, groupId } }
+        });
+
+        res.json({ success: true, message: 'Membro removido com sucesso.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao remover membro.' });
+    }
+});
+
 export default router;
