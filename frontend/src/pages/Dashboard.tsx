@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Users, LayoutDashboard, Home, ArrowRight, LogOut, Download } from 'lucide-react';
+import { Plus, Users, LayoutDashboard, Home, ArrowRight, LogOut, Download, Cat, Dog, Bug, Ghost, Snail, Squirrel, Github, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Group {
@@ -16,9 +16,17 @@ interface BeforeInstallPromptEvent extends Event {
     userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const AVATAR_MAP: Record<string, string> = {
-    fox: '🦊', cat: '🐱', dog: '🐶', panda: '🐼', koala: '🐨',
-    lion: '🦁', tiger: '🐯', monkey: '🐵', unicorn: '🦄', alien: '👽'
+const AVATAR_MAP: Record<string, React.ReactNode> = {
+    fox: <Cat size={20} color="#f97316" />,
+    cat: <Cat size={20} color="#a8a29e" />,
+    dog: <Dog size={20} color="#d97706" />,
+    panda: <Bug size={20} color="#10b981" />,
+    koala: <Snail size={20} color="#8b5cf6" />,
+    lion: <Squirrel size={20} color="#f59e0b" />,
+    tiger: <Cat size={20} color="#ef4444" />,
+    monkey: <Github size={20} color="#6366f1" />,
+    unicorn: <Sparkles size={20} color="#ec4899" />,
+    alien: <Ghost size={20} color="#14b8a6" />
 };
 
 const Dashboard: React.FC = () => {
@@ -149,7 +157,9 @@ const Dashboard: React.FC = () => {
                             )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                            <span style={{ fontSize: '1.4rem' }}>{user?.avatar ? AVATAR_MAP[user.avatar] : '👤'}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }}>
+                                {user?.avatar ? AVATAR_MAP[user.avatar] : <LayoutDashboard size={20} />}
+                            </div>
                             <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '1.1rem' }}>
                                 Olá, {user?.name || 'Visitante'}
                             </p>

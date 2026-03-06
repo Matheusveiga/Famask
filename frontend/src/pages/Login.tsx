@@ -2,19 +2,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Cat, Dog, Bug, Ghost, Snail, Squirrel, Github, Sparkles } from 'lucide-react';
 
 const AVATARS = [
-    { id: 'fox', emoji: '🦊' },
-    { id: 'cat', emoji: '🐱' },
-    { id: 'dog', emoji: '🐶' },
-    { id: 'panda', emoji: '🐼' },
-    { id: 'koala', emoji: '🐨' },
-    { id: 'lion', emoji: '🦁' },
-    { id: 'tiger', emoji: '🐯' },
-    { id: 'monkey', emoji: '🐵' },
-    { id: 'unicorn', emoji: '🦄' },
-    { id: 'alien', emoji: '👽' }
+    { id: 'fox', emoji: <Cat size={24} color="#f97316" /> },
+    { id: 'cat', emoji: <Cat size={24} color="#a8a29e" /> },
+    { id: 'dog', emoji: <Dog size={24} color="#d97706" /> },
+    { id: 'panda', emoji: <Bug size={24} color="#10b981" /> },
+    { id: 'koala', emoji: <Snail size={24} color="#8b5cf6" /> },
+    { id: 'lion', emoji: <Squirrel size={24} color="#f59e0b" /> },
+    { id: 'tiger', emoji: <Cat size={24} color="#ef4444" /> },
+    { id: 'monkey', emoji: <Github size={24} color="#6366f1" /> },
+    { id: 'unicorn', emoji: <Sparkles size={24} color="#ec4899" /> },
+    { id: 'alien', emoji: <Ghost size={24} color="#14b8a6" /> }
 ];
 
 const Login: React.FC = () => {

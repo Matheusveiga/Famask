@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff, History, Home, ShoppingCart, BookOpen, Briefcase, Sparkles, Tag, Gift, Cat, Dog, Rabbit, Bird, Bug, Ghost, Snail, Squirrel, Turtle, Github } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff, History, Home, ShoppingCart, BookOpen, Briefcase, Sparkles, Tag, Gift, Cat, Dog, Bug, Ghost, Snail, Squirrel, Github } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
