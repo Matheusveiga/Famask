@@ -544,10 +544,10 @@ const GroupDetails: React.FC = () => {
 
             {/* Tasks List */}
             <h2 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Todas as Tarefas <span style={{ background: 'var(--primary)', color: 'white', padding: '2px 10px', borderRadius: '20px', fontSize: '0.9rem' }}>{tasks.length}</span>
+                Tarefas por Categoria <span style={{ background: 'var(--primary)', color: 'white', padding: '2px 10px', borderRadius: '20px', fontSize: '0.9rem' }}>{tasks.length}</span>
             </h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '48px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginBottom: '48px' }}>
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>Carregando tarefas...</div>
                 ) : tasks.length === 0 ? (
@@ -566,123 +566,135 @@ const GroupDetails: React.FC = () => {
                         </p>
                     </div>
                 ) : (
-                    tasks.map((task, index) => (
-                        <div
-                            key={task.id}
-                            className="glass animate-in"
-                            style={{
-                                padding: '20px',
-                                borderRadius: 'var(--radius-lg)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '16px',
-                                animationDelay: `${index * 0.05}s`,
-                                borderLeft: task.isCompleted ? '4px solid var(--success)' : '4px solid transparent',
-                                opacity: task.isCompleted ? 0.7 : 1,
-                                transition: 'all 0.3s ease'
-                            }}
-                        >
-                            <button
-                                onClick={() => handleToggleTask(task.id, task.isCompleted)}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    color: task.isCompleted ? 'var(--success)' : 'var(--text-secondary)',
-                                    display: 'flex',
-                                    padding: '4px',
-                                    alignSelf: 'flex-start',
-                                    marginTop: '2px'
-                                }}
-                            >
-                                {task.isCompleted ? <CheckCircle2 size={24} /> : <Circle size={24} />}
-                            </button>
-
-                            <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    <p style={{
-                                        fontSize: '1.1rem',
-                                        color: task.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)',
-                                        textDecoration: task.isCompleted ? 'line-through' : 'none',
-                                        fontWeight: 500,
-                                        margin: 0
-                                    }}>
-                                        {task.title}
-                                    </p>
-                                    {task.category && task.category !== 'geral' && (
-                                        <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary)', textTransform: 'uppercase', fontWeight: 600 }}>
-                                            {task.category}
-                                        </span>
-                                    )}
-                                    {task.isDaily && <div title="Tarefa Diária" style={{ display: 'flex', color: 'var(--primary)' }}><Calendar size={16} /></div>}
-                                    <span style={{ color: 'var(--success)', fontWeight: 'bold', fontSize: '0.9rem', padding: '2px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-sm)' }}>
-                                        +{task.points} pts
-                                    </span>
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '8px', marginTop: '6px' }}>
-                                    <span>Criado por {task.creator.name}</span>
-                                    {task.isCompleted && task.completer && (
-                                        <>
-                                            <span>•</span>
-                                            <span>Concluído por {task.completer.name}</span>
-                                        </>
-                                    )}
-                                </div>
-
-                                {task.subtasks && task.subtasks.length > 0 && (
-                                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '8px', borderLeft: '2px solid rgba(255,255,255,0.05)' }}>
-                                        {task.subtasks.map(st => (
-                                            <div key={st.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: st.isCompleted ? 0.6 : 1 }}>
-                                                <button onClick={() => handleToggleSubtask(task.id, st.id, st.isCompleted)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: st.isCompleted ? 'var(--success)' : 'var(--text-secondary)' }}>
-                                                    {st.isCompleted ? <CheckSquare size={16} /> : <Circle size={16} />}
-                                                </button>
-                                                <span style={{ fontSize: '0.9rem', textDecoration: st.isCompleted ? 'line-through' : 'none' }}>{st.title}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {addingSubtaskTo === task.id && (
-                                    <div className="animate-in" style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-                                        <input
-                                            autoFocus
-                                            type="text"
-                                            className="form-input"
-                                            placeholder="Nome do item..."
-                                            style={{ padding: '4px 8px', fontSize: '0.9rem' }}
-                                            value={newSubtaskTitle}
-                                            onChange={e => setNewSubtaskTitle(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') handleAddSubtask(task.id);
-                                                if (e.key === 'Escape') setAddingSubtaskTo(null);
+                    Object.entries(
+                        tasks.reduce((acc, task) => {
+                            const cat = (task.category || 'geral').toLowerCase();
+                            if (!acc[cat]) acc[cat] = [];
+                            acc[cat].push(task);
+                            return acc;
+                        }, {} as Record<string, typeof tasks>)
+                    ).map(([category, catTasks], catIndex) => (
+                        <div key={category} className="task-category-block animate-in" style={{ animationDelay: `${catIndex * 0.1}s`, background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <h3 style={{ textTransform: 'capitalize', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontSize: '1.3rem', fontWeight: 600 }}>
+                                {category === 'geral' ? '📌 Geral' :
+                                    category === 'limpeza' ? '🧹 Casa & Limpeza' :
+                                        category === 'mercado' ? '🛒 Mercado' :
+                                            category === 'escola' ? '📚 Escola/Estudos' :
+                                                category === 'trabalho' ? '💼 Trabalho' : `🏷️ ${category}`}
+                                <span style={{ fontSize: '0.8rem', background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary)', padding: '2px 10px', borderRadius: '12px', fontWeight: 'bold' }}>{catTasks.length}</span>
+                            </h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                {catTasks.map((task, index) => (
+                                    <div
+                                        key={task.id}
+                                        className={`glass animate-in task-item ${task.isCompleted ? 'completed' : 'pending'}`}
+                                        style={{
+                                            padding: '20px',
+                                            borderRadius: 'var(--radius-lg)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '16px',
+                                            animationDelay: `${(catIndex * 0.1) + (index * 0.05)}s`
+                                        }}
+                                    >
+                                        <button
+                                            onClick={() => handleToggleTask(task.id, task.isCompleted)}
+                                            style={{
+                                                background: task.isCompleted ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                                                border: task.isCompleted ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                                borderRadius: '50%',
+                                                cursor: 'pointer',
+                                                color: task.isCompleted ? 'var(--success)' : 'var(--text-secondary)',
+                                                display: 'flex',
+                                                padding: '8px',
+                                                alignSelf: 'flex-start',
+                                                marginTop: '2px',
+                                                transition: 'all 0.2s ease'
                                             }}
-                                        />
-                                        <button onClick={() => handleAddSubtask(task.id)} className="btn btn-primary" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>Ok</button>
-                                        <button onClick={() => setAddingSubtaskTo(null)} className="btn btn-secondary" style={{ padding: '4px' }}>x</button>
-                                    </div>
-                                )}
-                            </div>
+                                        >
+                                            {task.isCompleted ? <CheckCircle2 size={24} /> : <Circle size={24} />}
+                                        </button>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start' }}>
-                                <button
-                                    onClick={() => {
-                                        setAddingSubtaskTo(task.id);
-                                        setNewSubtaskTitle('');
-                                    }}
-                                    className="btn btn-secondary"
-                                    style={{ padding: '8px', borderColor: 'transparent', fontSize: '0.8rem' }}
-                                    title="Adicionar Sub-tarefa"
-                                >
-                                    <Plus size={16} /> Item
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteTask(task.id)}
-                                    className="btn btn-secondary"
-                                    style={{ padding: '8px', color: '#ff4b4b', borderColor: 'transparent' }}
-                                    title="Deletar tarefa"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                                <p style={{
+                                                    fontSize: '1.15rem',
+                                                    color: task.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)',
+                                                    textDecoration: task.isCompleted ? 'line-through' : 'none',
+                                                    fontWeight: 500,
+                                                    margin: 0
+                                                }}>
+                                                    {task.title}
+                                                </p>
+                                                {task.isDaily && <div title="Tarefa Diária" style={{ display: 'flex', background: 'rgba(99, 102, 241, 0.15)', padding: '4px', borderRadius: '50%', color: 'var(--primary)' }}><Calendar size={14} /></div>}
+                                                <span style={{ color: 'var(--success)', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px 10px', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '12px' }}>
+                                                    +{task.points} pts
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', gap: '8px', marginTop: '8px', opacity: 0.8 }}>
+                                                <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>Criado por {task.creator.name}</span>
+                                                {task.isCompleted && task.completer && (
+                                                    <span style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', padding: '2px 8px', borderRadius: '4px' }}>Concluído por {task.completer.name}</span>
+                                                )}
+                                            </div>
+
+                                            {task.subtasks && task.subtasks.length > 0 && (
+                                                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '12px', borderLeft: '2px solid rgba(255,255,255,0.1)' }}>
+                                                    {task.subtasks.map(st => (
+                                                        <div key={st.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: st.isCompleted ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+                                                            <button onClick={() => handleToggleSubtask(task.id, st.id, st.isCompleted)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: st.isCompleted ? 'var(--success)' : 'var(--text-secondary)' }}>
+                                                                {st.isCompleted ? <CheckSquare size={18} /> : <Circle size={18} />}
+                                                            </button>
+                                                            <span style={{ fontSize: '0.95rem', textDecoration: st.isCompleted ? 'line-through' : 'none', color: st.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)' }}>{st.title}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {addingSubtaskTo === task.id && (
+                                                <div className="animate-in" style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                                                    <input
+                                                        autoFocus
+                                                        type="text"
+                                                        className="form-input"
+                                                        placeholder="Nome do item..."
+                                                        style={{ padding: '8px 12px', fontSize: '0.9rem', flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' }}
+                                                        value={newSubtaskTitle}
+                                                        onChange={e => setNewSubtaskTitle(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') handleAddSubtask(task.id);
+                                                            if (e.key === 'Escape') setAddingSubtaskTo(null);
+                                                        }}
+                                                    />
+                                                    <button onClick={() => handleAddSubtask(task.id)} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>Salvar</button>
+                                                    <button onClick={() => setAddingSubtaskTo(null)} className="btn btn-secondary" style={{ padding: '8px 12px' }}>✕</button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start' }}>
+                                            <button
+                                                onClick={() => {
+                                                    setAddingSubtaskTo(task.id);
+                                                    setNewSubtaskTitle('');
+                                                }}
+                                                className="btn btn-secondary"
+                                                style={{ padding: '8px', background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.05)', fontSize: '0.8rem', width: '36px', height: '36px', display: 'flex', justifyContent: 'center' }}
+                                                title="Adicionar Sub-tarefa"
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteTask(task.id)}
+                                                className="btn btn-secondary"
+                                                style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.05)', color: '#ff4b4b', borderColor: 'rgba(239, 68, 68, 0.1)', width: '36px', height: '36px', display: 'flex', justifyContent: 'center' }}
+                                                title="Deletar tarefa"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     ))

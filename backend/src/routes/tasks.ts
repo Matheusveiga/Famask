@@ -177,13 +177,15 @@ router.patch('/:taskId', async (req: AuthRequest, res: Response) => {
 
         // 2. Update the score of the user who is interacting (or who completed it originally)
         if (isStatusChanging) {
-            const targetUserId = isCompleted ? userId : (existingTask.completedBy || userId);
-            transaction.push(
-                prisma.groupMember.update({
-                    where: { userId_groupId: { userId: targetUserId, groupId: existingTask.groupId } },
-                    data: { score: { increment: pointDelta } }
-                }) as any
-            );
+            const targetUserId = isCompleted ? userId : existingTask.completedBy;
+            if (targetUserId) {
+                transaction.push(
+                    prisma.groupMember.update({
+                        where: { userId_groupId: { userId: targetUserId, groupId: existingTask.groupId } },
+                        data: { score: { increment: pointDelta } }
+                    }) as any
+                );
+            }
         }
 
         const [updatedTask] = await prisma.$transaction(transaction);
