@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff, History } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, Trash2, Plus, UserPlus, Copy, Trophy, Calendar, CheckSquare, Bell, BellOff, History, Home, ShoppingCart, BookOpen, Briefcase, Sparkles, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -646,11 +646,11 @@ const GroupDetails: React.FC = () => {
                     ).map(([category, catTasks], catIndex) => (
                         <div key={category} className="task-category-block animate-in" style={{ animationDelay: `${catIndex * 0.1}s`, background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <h3 style={{ textTransform: 'capitalize', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontSize: '1.3rem', fontWeight: 600 }}>
-                                {category === 'geral' ? '📌 Geral' :
-                                    category === 'limpeza' ? '🧹 Casa & Limpeza' :
-                                        category === 'mercado' ? '🛒 Mercado' :
-                                            category === 'escola' ? '📚 Escola/Estudos' :
-                                                category === 'trabalho' ? '💼 Trabalho' : `🏷️ ${category}`}
+                                {category === 'geral' ? <><Sparkles size={22} color="var(--primary)" /> Geral</> :
+                                    category === 'limpeza' ? <><Home size={22} color="var(--success)" /> Casa & Limpeza</> :
+                                        category === 'mercado' ? <><ShoppingCart size={22} color="#f59e0b" /> Mercado</> :
+                                            category === 'escola' ? <><BookOpen size={22} color="#3b82f6" /> Escola/Estudos</> :
+                                                category === 'trabalho' ? <><Briefcase size={22} color="#8b5cf6" /> Trabalho</> : <><Tag size={22} color="var(--text-secondary)" /> {category}</>}
                                 <span style={{ fontSize: '0.8rem', background: 'rgba(99, 102, 241, 0.2)', color: 'var(--primary)', padding: '2px 10px', borderRadius: '12px', fontWeight: 'bold' }}>{catTasks.length}</span>
                             </h3>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
