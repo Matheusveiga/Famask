@@ -41,26 +41,34 @@ const Dashboard: React.FC = () => {
 
     // PWA Install Logic
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-    const [showInstallBtn, setShowInstallBtn] = useState(false);
+    const [isStandalone, setIsStandalone] = useState(false);
+    const [showInstallModal, setShowInstallModal] = useState(false);
 
     useEffect(() => {
+        const checkStandalone = () => {
+            return window.matchMedia('(display-mode: standalone)').matches || ('standalone' in navigator && (navigator as any).standalone);
+        };
+        setIsStandalone(checkStandalone());
+
         const handler = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e as BeforeInstallPromptEvent);
-            setShowInstallBtn(true);
         };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            setShowInstallBtn(false);
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                setIsStandalone(true);
+            }
+            setDeferredPrompt(null);
+        } else {
+            setShowInstallModal(true);
         }
-        setDeferredPrompt(null);
     };
 
     const navigate = useNavigate();
@@ -117,6 +125,38 @@ const Dashboard: React.FC = () => {
     return (
         <div style={{ padding: '40px 20px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
 
+            {/* Custom Install Modal for iOS / Default */}
+            {showInstallModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 1000, padding: '20px'
+                }}>
+                    <div className="glass glass-card animate-in" style={{ width: '100%', maxWidth: '400px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
+                            <Download size={32} color="var(--primary)" />
+                        </div>
+                        <h3 style={{ marginBottom: '16px', fontSize: '1.4rem' }}>Instalar o Aplicativo</h3>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                            Instale o Famask para ter acesso rápido direto da sua tela inicial, assim como um aplicativo nativo.
+                        </p>
+
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '12px', textAlign: 'left', marginBottom: '24px', width: '100%' }}>
+                            <p style={{ margin: '0 0 8px 0', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>🍎 <strong>iOS (iPhone/iPad):</strong></p>
+                            <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Abra no Safari, toque no ícone de <strong>Compartilhar</strong> (quadrado com seta pra cima) e selecione <strong>"Adicionar à Tela de Início"</strong>.</p>
+
+                            <p style={{ margin: '0 0 8px 0', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>🤖 <strong>Android:</strong></p>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Toque nos três pontinhos do navegador e selecione <strong>"Adicionar à Tela Inicial"</strong> ou "Instalar Aplicativo".</p>
+                        </div>
+
+                        <button className="btn btn-primary" onClick={() => setShowInstallModal(false)} style={{ width: '100%' }}>
+                            Entendi!
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Professional Header / Hero */}
             <header style={{
                 display: 'flex',
@@ -133,7 +173,7 @@ const Dashboard: React.FC = () => {
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <h1 className="title" style={{ margin: 0, fontSize: '2rem' }}>Meus Grupos</h1>
-                            {showInstallBtn && (
+                            {!isStandalone && (
                                 <button
                                     onClick={handleInstallClick}
                                     className="animate-in"
