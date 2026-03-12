@@ -61,7 +61,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
             include: {
                 members: {
                     include: {
-                        user: { select: { id: true, name: true, email: true } },
+                        user: { select: { id: true, name: true, email: true, avatar: true } },
                     },
                 },
             },
@@ -82,7 +82,7 @@ router.get('/:groupId', async (req: AuthRequest, res: Response) => {
             where: { id: groupId },
             include: {
                 members: {
-                    include: { user: { select: { id: true, name: true, email: true } } }
+                    include: { user: { select: { id: true, name: true, email: true, avatar: true } } }
                 },
             },
         });
@@ -140,7 +140,7 @@ router.post('/:groupId/members', async (req: AuthRequest, res: Response) => {
                 role: 'Member',
             },
             include: {
-                user: { select: { id: true, name: true, email: true } },
+                user: { select: { id: true, name: true, email: true, avatar: true } },
             },
         });
 

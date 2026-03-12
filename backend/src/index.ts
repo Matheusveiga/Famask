@@ -35,6 +35,25 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Famask API is running' });
 });
 
+// Daily Tasks Reset — runs every day at midnight (BRT, UTC-3)
+// Resets isCompleted and completedBy for all recurring daily tasks
+cron.schedule('0 3 * * *', async () => {
+    try {
+        const result = await prisma.task.updateMany({
+            where: { isDaily: true, isCompleted: true },
+            data: {
+                isCompleted: false,
+                completedBy: null,
+            },
+        });
+        console.log(`[CRON] Daily task reset: ${result.count} task(s) reset at ${new Date().toISOString()}`);
+    } catch (err) {
+        console.error('[CRON] Error resetting daily tasks:', err);
+    }
+}, {
+    timezone: 'America/Sao_Paulo'
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

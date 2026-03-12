@@ -120,7 +120,7 @@ router.get('/whoami', authenticateToken as any, async (req: AuthRequest, res) =>
     try {
         const user = await prisma.user.findUnique({
             where: { id: req.user?.userId },
-            select: { id: true, name: true, email: true }
+            select: { id: true, name: true, email: true, avatar: true }
         });
         res.json({ jwt: req.user, db: user });
     } catch (error) {
