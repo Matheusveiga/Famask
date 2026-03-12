@@ -115,7 +115,75 @@ router.post('/logout', (req, res) => {
     res.json({ message: 'Logout realizado.' });
 });
 
+// Update profile (name and avatar)
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+
+const updateProfileSchema = z.object({
+    name: z.string().min(2, 'O nome deve ter no mínimo 2 caracteres.').optional(),
+    avatar: z.string().optional(),
+});
+
+router.patch('/me', authenticateToken as any, async (req: AuthRequest, res) => {
+    try {
+        const { name, avatar } = updateProfileSchema.parse(req.body);
+        const userId = req.user!.userId;
+
+        const updated = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                ...(name && { name }),
+                ...(avatar && { avatar }),
+            },
+            select: { id: true, name: true, email: true, avatar: true },
+        });
+
+        res.json({ user: updated });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ error: (error as any).errors });
+        }
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao atualizar perfil.' });
+    }
+});
+
+// Change password
+const changePasswordSchema = z.object({
+    currentPassword: z.string(),
+    newPassword: z.string()
+        .min(6, 'A nova senha deve ter no mínimo 6 caracteres.')
+        .refine((val) => !/^(123456(789)?|password|senha123|qwerty)$/i.test(val), {
+            message: 'Esta senha é muito fraca ou comum.',
+        }),
+});
+
+router.post('/change-password', authenticateToken as any, async (req: AuthRequest, res) => {
+    try {
+        const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+        const userId = req.user!.userId;
+
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+        const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+        if (!valid) return res.status(400).json({ error: 'Senha atual incorreta.' });
+
+        const newHash = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id: userId },
+            data: { passwordHash: newHash },
+        });
+
+        res.json({ message: 'Senha alterada com sucesso.' });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ error: (error as any).errors });
+        }
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao alterar senha.' });
+    }
+});
+
 router.get('/whoami', authenticateToken as any, async (req: AuthRequest, res) => {
     try {
         const user = await prisma.user.findUnique({

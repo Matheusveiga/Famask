@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import GroupDetails from './pages/GroupDetails';
+import Profile from './pages/Profile';
 import { Toaster } from 'react-hot-toast';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -43,6 +44,14 @@ const App: React.FC = () => {
           element={
             <PrivateRoute>
               <GroupDetails />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
             </PrivateRoute>
           }
         />

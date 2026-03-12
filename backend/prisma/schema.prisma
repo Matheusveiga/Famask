@@ -62,6 +62,7 @@ model Task {
   category    String?   @default("geral") // "Limpeza", "Mercado", "Escola"
   isCompleted Boolean   @default(false)
   completedBy String?
+  completedAt DateTime? // Set when isCompleted becomes true, cleared when uncompleted
   createdAt   DateTime  @default(now())
   dueDate     DateTime?
   isDaily     Boolean   @default(false)

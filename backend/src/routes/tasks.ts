@@ -171,6 +171,7 @@ router.patch('/:taskId', async (req: AuthRequest, res: Response) => {
                     points,
                     isCompleted,
                     completedBy: isCompleted ? userId : (isCompleted === false ? null : undefined),
+                    completedAt: isCompleted ? new Date() : (isCompleted === false ? null : undefined),
                 },
             })
         );

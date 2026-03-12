@@ -44,6 +44,7 @@ cron.schedule('0 3 * * *', async () => {
             data: {
                 isCompleted: false,
                 completedBy: null,
+                completedAt: null,
             },
         });
         console.log(`[CRON] Daily task reset: ${result.count} task(s) reset at ${new Date().toISOString()}`);

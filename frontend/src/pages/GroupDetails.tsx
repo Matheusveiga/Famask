@@ -27,6 +27,7 @@ interface Task {
     isDaily: boolean;
     points: number;
     createdAt: string;
+    completedAt: string | null;
     creator: { name: string };
     completer: { name: string } | null;
     subtasks?: Array<{ id: string; title: string; isCompleted: boolean }>;
@@ -54,6 +55,8 @@ const GroupDetails: React.FC = () => {
     const [rewards, setRewards] = useState<Reward[]>([]);
     const [groupData, setGroupData] = useState<GroupData | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const isAdmin = groupData?.members.some(m => m.user.id === user?.id && m.role === 'Admin') ?? false;
 
     // New Task States
     const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -405,12 +408,17 @@ const GroupDetails: React.FC = () => {
                                 <p style={{ color: 'var(--text-secondary)', textAlign: 'center', margin: '40px 0' }}>Nenhuma tarefa concluída recentemente.</p>
                             ) : (
                                 tasks.filter(t => t.isCompleted && t.completer)
-                                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                                    .sort((a, b) => new Date(b.completedAt ?? b.createdAt).getTime() - new Date(a.completedAt ?? a.createdAt).getTime())
                                     .map(t => (
                                         <div key={t.id} style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--success)' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                                                 <strong style={{ color: 'var(--success)' }}>{t.completer?.name}</strong>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(t.createdAt).toLocaleDateString()}</span>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                    {t.completedAt
+                                                        ? new Date(t.completedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                                                        : new Date(t.createdAt).toLocaleDateString('pt-BR')
+                                                    }
+                                                </span>
                                             </div>
                                             <div style={{ fontSize: '0.9rem' }}>
                                                 Concluiu a tarefa <strong>"{t.title}"</strong> e recebeu {t.points} pts.
@@ -503,9 +511,11 @@ const GroupDetails: React.FC = () => {
                     <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Gift size={22} color="#ec4899" /> Loja de Recompensas
                     </h3>
-                    <button className="btn btn-secondary" onClick={() => setShowRewardForm(!showRewardForm)} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-                        <Plus size={16} /> {showRewardForm ? 'Cancelar' : 'Nova (Admin)'}
-                    </button>
+                    {isAdmin && (
+                        <button className="btn btn-secondary" onClick={() => setShowRewardForm(!showRewardForm)} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                            <Plus size={16} /> {showRewardForm ? 'Cancelar' : 'Nova Recompensa'}
+                        </button>
+                    )}
                 </div>
 
                 {showRewardForm && (
@@ -551,9 +561,11 @@ const GroupDetails: React.FC = () => {
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <strong style={{ fontSize: '1rem', lineHeight: 1.2 }}>{reward.title}</strong>
-                                    <button onClick={() => handleDeleteReward(reward.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }} title="Excluir">
-                                        <Trash2 size={14} />
-                                    </button>
+                                    {isAdmin && (
+                                        <button onClick={() => handleDeleteReward(reward.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0 }} title="Excluir">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                                     <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.9rem' }}>{reward.pointsCost} pts</span>

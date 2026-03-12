@@ -196,7 +196,13 @@ const Dashboard: React.FC = () => {
                                 </button>
                             )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                        <div
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', cursor: 'pointer', opacity: 0.85, transition: 'opacity 0.2s' }}
+                            onClick={() => navigate('/profile')}
+                            title="Editar Perfil"
+                            onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                            onMouseLeave={e => (e.currentTarget.style.opacity = '0.85')}
+                        >
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }}>
                                 {user?.avatar ? AVATAR_MAP[user.avatar] : <LayoutDashboard size={20} />}
                             </div>
