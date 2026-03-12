@@ -14,6 +14,7 @@ const taskSchema = z.object({
     category: z.string().optional(),
     isDaily: z.boolean().optional(),
     points: z.number().optional(),
+    dueDate: z.string().optional().nullable(),
 });
 
 const updateTaskSchema = z.object({
@@ -22,6 +23,7 @@ const updateTaskSchema = z.object({
     isCompleted: z.boolean().optional(),
     isDaily: z.boolean().optional(),
     points: z.number().optional(),
+    dueDate: z.string().optional().nullable(),
 });
 
 // Helper for broadcasting Push Notifications
@@ -57,7 +59,7 @@ async function broadcastToGroup(groupId: string, excludeUserId: string, payload:
 // Create task
 router.post('/', async (req: AuthRequest, res: Response) => {
     try {
-        const { groupId, title, description, category, isDaily, points } = taskSchema.parse(req.body);
+        const { groupId, title, description, category, isDaily, points, dueDate } = taskSchema.parse(req.body);
         const userId = req.user!.userId;
 
         // Check if user is in the group
@@ -78,6 +80,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
                 category: category ?? "geral",
                 isDaily: isDaily ?? false,
                 points: points ?? 10,
+                dueDate: dueDate ? new Date(dueDate) : null,
             },
             include: { creator: { select: { name: true } } }
         });
@@ -133,7 +136,7 @@ router.get('/:groupId', async (req: AuthRequest, res: Response) => {
 // Update task
 router.patch('/:taskId', async (req: AuthRequest, res: Response) => {
     try {
-        const { title, description, isCompleted, isDaily, points } = updateTaskSchema.parse(req.body);
+        const { title, description, isCompleted, isDaily, points, dueDate } = updateTaskSchema.parse(req.body);
         const taskId = req.params.taskId as string;
         const userId = req.user!.userId;
 
@@ -170,6 +173,7 @@ router.patch('/:taskId', async (req: AuthRequest, res: Response) => {
                     isDaily,
                     points,
                     isCompleted,
+                    dueDate: dueDate === null ? null : (dueDate ? new Date(dueDate) : undefined),
                     completedBy: isCompleted ? userId : (isCompleted === false ? null : undefined),
                     completedAt: isCompleted ? new Date() : (isCompleted === false ? null : undefined),
                 },

@@ -261,4 +261,48 @@ router.delete('/:groupId/members/:memberId', async (req: AuthRequest, res: Respo
     }
 });
 
+router.post('/:groupId/leave', async (req: AuthRequest, res: Response) => {
+    try {
+        const groupId = req.params.groupId as string;
+        const userId = req.user!.userId;
+
+        const membership = await prisma.groupMember.findUnique({
+            where: { userId_groupId: { userId, groupId } },
+        });
+
+        if (!membership) {
+            return res.status(404).json({ error: 'Você não é membro deste grupo.' });
+        }
+
+        // Check if user is the last member
+        const memberCount = await prisma.groupMember.count({ where: { groupId } });
+
+        if (memberCount <= 1) {
+            // Delete group if it's the last member
+            await prisma.familyGroup.delete({ where: { id: groupId } });
+            return res.json({ success: true, message: 'Você saiu e o grupo foi excluído por não haver mais membros.' });
+        }
+
+        // If admin is leaving, check if there are other admins
+        if (membership.role === 'Admin') {
+            const otherAdmins = await prisma.groupMember.count({
+                where: { groupId, role: 'Admin', userId: { not: userId } }
+            });
+
+            if (otherAdmins === 0) {
+                return res.status(400).json({ error: 'Você é o único administrador. Promova outro membro antes de sair ou delete o grupo.' });
+            }
+        }
+
+        await prisma.groupMember.delete({
+            where: { userId_groupId: { userId, groupId } }
+        });
+
+        res.json({ success: true, message: 'Você saiu do grupo com sucesso.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao sair do grupo.' });
+    }
+});
+
 export default router;

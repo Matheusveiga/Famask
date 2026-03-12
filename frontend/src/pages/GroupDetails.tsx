@@ -28,6 +28,7 @@ interface Task {
     points: number;
     createdAt: string;
     completedAt: string | null;
+    dueDate: string | null;
     creator: { name: string };
     completer: { name: string } | null;
     subtasks?: Array<{ id: string; title: string; isCompleted: boolean }>;
@@ -60,9 +61,12 @@ const GroupDetails: React.FC = () => {
 
     // New Task States
     const [newTaskTitle, setNewTaskTitle] = useState('');
+    const [newTaskDescription, setNewTaskDescription] = useState('');
     const [newTaskCategory, setNewTaskCategory] = useState('geral');
     const [newTaskPoints, setNewTaskPoints] = useState<number>(10);
     const [newTaskIsDaily, setNewTaskIsDaily] = useState<boolean>(false);
+    const [newTaskDueDate, setNewTaskDueDate] = useState('');
+    const [showTaskForm, setShowTaskForm] = useState(false);
 
     // Add member
     const [newMemberEmail, setNewMemberEmail] = useState('');
@@ -147,20 +151,26 @@ const GroupDetails: React.FC = () => {
         e.preventDefault();
         if (!newTaskTitle.trim()) return;
         try {
-            await api.post('/api/tasks', {
+            const { data } = await api.post('/api/tasks', {
                 groupId: id,
                 title: newTaskTitle,
+                description: newTaskDescription,
                 category: newTaskCategory,
+                isDaily: newTaskIsDaily,
                 points: newTaskPoints,
-                isDaily: newTaskIsDaily
+                dueDate: newTaskDueDate || null,
             });
+            setTasks([data, ...tasks]);
             setNewTaskTitle('');
+            setNewTaskDescription('');
             setNewTaskCategory('geral');
             setNewTaskPoints(10);
             setNewTaskIsDaily(false);
-            fetchTasks();
-        } catch (err) {
-            console.error(err);
+            setNewTaskDueDate('');
+            setShowTaskForm(false);
+            toast.success('Tarefa criada!');
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || 'Erro ao criar tarefa.');
         }
     };
 
@@ -356,18 +366,34 @@ const GroupDetails: React.FC = () => {
         );
     };
 
-    const handleDeleteGroup = () => {
+    const handleDeleteGroup = async () => {
         openConfirm(
-            'Deletar Grupo Inteiro',
-            'ATENÇÃO: Você está prestes a deletar completamente este grupo. Todas as tarefas, recompensas e pontuações serão apagadas permanentemente. Deseja continuar?',
+            'Excluir Família',
+            `Tem certeza que deseja excluir permanentemente o grupo "${groupData?.name}"? Esta ação não pode ser desfeita.`,
             async () => {
                 try {
                     await api.delete(`/api/groups/${id}`);
-                    toast.success('Grupo deletado permanentemente.');
+                    toast.success('Grupo excluído.');
                     navigate('/');
                 } catch (err: unknown) {
-                    toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao deletar grupo. (Apenas Admins)');
+                    toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao excluir grupo.');
                     closeConfirm();
+                }
+            }
+        );
+    };
+
+    const handleLeaveGroup = async () => {
+        openConfirm(
+            'Sair da Família',
+            `Tem certeza que deseja sair do grupo "${groupData?.name}"?`,
+            async () => {
+                try {
+                    await api.post(`/api/groups/${id}/leave`);
+                    toast.success('Você saiu do grupo.');
+                    navigate('/');
+                } catch (err: any) {
+                    toast.error(err.response?.data?.error || 'Erro ao sair do grupo.');
                 }
             }
         );
@@ -467,7 +493,7 @@ const GroupDetails: React.FC = () => {
                     >
                         <Copy size={16} /> Código de Convite
                     </button>
-                    {groupData?.members.find(m => m.user.id === user?.id && m.role === 'Admin') && (
+                    {isAdmin ? (
                         <button
                             className="btn"
                             style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
@@ -475,6 +501,15 @@ const GroupDetails: React.FC = () => {
                             title="Deletar Grupo"
                         >
                             <Trash2 size={16} /> Deletar Grupo
+                        </button>
+                    ) : (
+                        <button
+                            className="btn"
+                            style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                            onClick={handleLeaveGroup}
+                            title="Sair do Grupo"
+                        >
+                            <ArrowLeft size={16} /> Sair do Grupo
                         </button>
                     )}
                 </div>
@@ -618,17 +653,27 @@ const GroupDetails: React.FC = () => {
             <div className="glass glass-card animate-in" style={{ marginBottom: '32px' }}>
                 <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div style={{ display: 'flex', gap: '12px' }}>
-                        <input
-                            type="text"
-                            className="form-input"
-                            placeholder="O que precisa ser feito hoje?"
-                            style={{ flex: 1, padding: '16px', fontSize: '1.1rem' }}
-                            value={newTaskTitle}
-                            onChange={e => setNewTaskTitle(e.target.value)}
-                            required
-                        />
-                        <button type="submit" className="btn btn-primary" style={{ padding: '0 24px' }}>
-                            <Plus size={20} />
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Título da tarefa..."
+                                style={{ padding: '16px', fontSize: '1.1rem' }}
+                                value={newTaskTitle}
+                                onChange={e => setNewTaskTitle(e.target.value)}
+                                required
+                            />
+                            <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Descrição (opcional)"
+                                style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                                value={newTaskDescription}
+                                onChange={e => setNewTaskDescription(e.target.value)}
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-primary" style={{ padding: '0 24px', alignSelf: 'stretch' }}>
+                            <Plus size={24} />
                         </button>
                     </div>
 
@@ -645,15 +690,22 @@ const GroupDetails: React.FC = () => {
                             <option value="escola">Escola/Estudos</option>
                             <option value="trabalho">Trabalho</option>
                         </select>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label className="form-label">Recorrente?</label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', height: '44px' }}>
+                                <input type="checkbox" checked={newTaskIsDaily} onChange={e => setNewTaskIsDaily(e.target.checked)} />
+                                <span>Tarefa Diária</span>
+                            </label>
+                        </div>
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label className="form-label">Vencimento (Opcional)</label>
                             <input
-                                type="checkbox"
-                                style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
-                                checked={newTaskIsDaily}
-                                onChange={e => setNewTaskIsDaily(e.target.checked)}
+                                type="date"
+                                className="form-input"
+                                value={newTaskDueDate}
+                                onChange={e => setNewTaskDueDate(e.target.value)}
                             />
-                            Tarefa Diária (Recorrente)
-                        </label>
+                        </div>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
                             Recompensa da Tarefa:
                             <input
@@ -753,7 +805,19 @@ const GroupDetails: React.FC = () => {
                                                 }}>
                                                     {task.title}
                                                 </p>
-                                                {task.isDaily && <div title="Tarefa Diária" style={{ display: 'flex', background: 'rgba(99, 102, 241, 0.15)', padding: '4px', borderRadius: '50%', color: 'var(--primary)' }}><Calendar size={14} /></div>}
+                                                {task.isDaily && <span style={{ fontSize: '0.7rem', background: 'rgba(99, 102, 241, 0.2)', padding: '2px 6px', borderRadius: '4px', color: 'var(--primary)', border: '1px solid rgba(99, 102, 241, 0.3)' }}>DIÁRIA</span>}
+                                                {task.dueDate && (
+                                                    <span style={{
+                                                        fontSize: '0.7rem',
+                                                        background: new Date(task.dueDate) < new Date() && !task.isCompleted ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        color: new Date(task.dueDate) < new Date() && !task.isCompleted ? 'var(--danger)' : 'var(--text-secondary)',
+                                                        border: '1px solid ' + (new Date(task.dueDate) < new Date() && !task.isCompleted ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.1)')
+                                                    }}>
+                                                        VENCE: {new Date(task.dueDate).toLocaleDateString()}
+                                                    </span>
+                                                )}
                                                 <span style={{ color: 'var(--success)', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px 10px', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '12px' }}>
                                                     +{task.points} pts
                                                 </span>
