@@ -66,6 +66,7 @@ const GroupDetails: React.FC = () => {
 
     // Add member
     const [newMemberEmail, setNewMemberEmail] = useState('');
+    const [addingMember, setAddingMember] = useState(false);
 
     // Reward Creation States
     const [showRewardForm, setShowRewardForm] = useState(false);
@@ -295,7 +296,9 @@ const GroupDetails: React.FC = () => {
         try {
             await api.post(`/api/groups/${id}/members`, { email: newMemberEmail });
             setNewMemberEmail('');
+            setAddingMember(false);
             toast.success('Membro adicionado!');
+            fetchTasks();
         } catch (err: unknown) {
             toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao adicionar membro.');
         }
@@ -479,29 +482,61 @@ const GroupDetails: React.FC = () => {
 
             {/* Gamification Leaderboard */}
             {groupData && (
-                <div className="glass glass-card animate-in" style={{ marginBottom: '32px', display: 'flex', gap: '24px', overflowX: 'auto', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 'max-content' }}>
-                        <Trophy size={20} color="var(--primary)" />
-                        <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Ranking de Pontos</h3>
-                    </div>
-                    {groupData.members.map(member => (
-                        <div key={member.user.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-sm)', whiteSpace: 'nowrap' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }}>
-                                {AVATAR_MAP[member.user.avatar || 'fox']}
-                            </div>
-                            <strong>{member.user.name}</strong>
-                            <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{member.score} pts</span>
-                            {groupData.members.find(m => m.user.id === user?.id && m.role === 'Admin') && member.user.id !== user?.id && (
-                                <button
-                                    onClick={() => handleDeleteMember(member.user.id, member.user.name)}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', marginLeft: '8px', padding: '4px' }}
-                                    title="Remover Membro"
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                            )}
+                <div className="glass glass-card animate-in" style={{ marginBottom: '32px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Trophy size={20} color="var(--primary)" />
+                            <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Ranking de Pontos</h3>
                         </div>
-                    ))}
+                        {isAdmin && (
+                            <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                                onClick={() => setAddingMember(v => !v)}
+                            >
+                                <UserPlus size={14} /> {addingMember ? 'Cancelar' : 'Adicionar Membro'}
+                            </button>
+                        )}
+                    </div>
+
+                    {isAdmin && addingMember && (
+                        <form onSubmit={handleAddMember} className="animate-in" style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                            <input
+                                type="email"
+                                className="form-input"
+                                placeholder="E-mail do novo membro"
+                                style={{ flex: 1 }}
+                                value={newMemberEmail}
+                                onChange={e => setNewMemberEmail(e.target.value)}
+                                autoFocus
+                                required
+                            />
+                            <button type="submit" className="btn btn-primary" style={{ padding: '8px 16px' }}>
+                                <UserPlus size={16} />
+                            </button>
+                        </form>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', flexWrap: 'wrap' }}>
+                        {groupData.members.map(member => (
+                            <div key={member.user.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-sm)', whiteSpace: 'nowrap' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }}>
+                                    {AVATAR_MAP[member.user.avatar || 'fox']}
+                                </div>
+                                <strong>{member.user.name}</strong>
+                                <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{member.score} pts</span>
+                                {isAdmin && member.user.id !== user?.id && (
+                                    <button
+                                        onClick={() => handleDeleteMember(member.user.id, member.user.name)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', marginLeft: '4px', padding: '4px' }}
+                                        title="Remover Membro"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
@@ -793,24 +828,36 @@ const GroupDetails: React.FC = () => {
                 )}
             </div>
 
-            {/* Add Member Section */}
-            <div className="glass glass-card animate-in" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><UserPlus size={20} color="var(--primary)" /> Adicionar Membro (Apenas Admin)</h3>
-                <form onSubmit={handleAddMember} style={{ display: 'flex', gap: '12px' }}>
-                    <input
-                        type="email"
-                        className="form-input"
-                        placeholder="E-mail do novo membro"
-                        style={{ flex: 1 }}
-                        value={newMemberEmail}
-                        onChange={e => setNewMemberEmail(e.target.value)}
-                        required
-                    />
-                    <button type="submit" className="btn btn-secondary">
-                        <UserPlus size={18} /> Add
-                    </button>
-                </form>
-            </div>
+
+            {/* Footer */}
+            <footer style={{
+                marginTop: '48px',
+                paddingTop: '24px',
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '12px',
+                color: 'var(--text-secondary)',
+                fontSize: '0.8rem',
+                opacity: 0.6,
+            }}>
+                <span>{groupData?.name}</span>
+                {groupData?.inviteCode && (
+                    <span
+                        style={{ cursor: 'pointer', fontFamily: 'monospace', letterSpacing: '0.1em' }}
+                        title="Copiar código de convite"
+                        onClick={() => {
+                            navigator.clipboard.writeText(groupData.inviteCode);
+                            toast.success('Código copiado!');
+                        }}
+                    >
+                        #{groupData.inviteCode}
+                    </span>
+                )}
+                <span>Famask</span>
+            </footer>
 
             {/* Custom Confirmation Modal */}
             {confirmModal.isOpen && (

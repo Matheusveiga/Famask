@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../prisma';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -116,7 +117,6 @@ router.post('/logout', (req, res) => {
 });
 
 // Update profile (name and avatar)
-import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const updateProfileSchema = z.object({
     name: z.string().min(2, 'O nome deve ter no mínimo 2 caracteres.').optional(),
