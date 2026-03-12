@@ -1,0 +1,6 @@
+-- Migration: remove_invitecode_default
+-- This is an intentionally empty migration.
+-- The @default(uuid()) was a Prisma-only annotation on FamilyGroup.inviteCode
+-- and never generated a real SQL DEFAULT on the PostgreSQL column.
+-- The backend always generates the 6-character invite code explicitly.
+-- Removing @default(uuid()) from the Prisma schema only clarifies intent.

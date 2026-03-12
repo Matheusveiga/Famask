@@ -19,11 +19,23 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         const { name } = groupSchema.parse(req.body);
         const userId = req.user!.userId;
 
-        const generateCode = () => {
+        const generateUniqueCode = async (): Promise<string> => {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            return Array.from({ length: 6 }).map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+            const MAX_ATTEMPTS = 10;
+
+            for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+                const code = Array.from({ length: 6 })
+                    .map(() => chars.charAt(Math.floor(Math.random() * chars.length)))
+                    .join('');
+
+                const existing = await prisma.familyGroup.findUnique({ where: { inviteCode: code } });
+                if (!existing) return code;
+            }
+
+            throw new Error('Não foi possível gerar um código de convite único. Tente novamente.');
         };
-        const inviteCode = generateCode();
+
+        const inviteCode = await generateUniqueCode();
 
         const group = await prisma.familyGroup.create({
             data: {
