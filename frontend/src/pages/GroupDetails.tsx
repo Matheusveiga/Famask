@@ -891,35 +891,72 @@ const GroupDetails: React.FC = () => {
             </div>
 
 
-            {/* Footer */}
-            <footer style={{
-                marginTop: '48px',
-                paddingTop: '24px',
-                borderTop: '1px solid rgba(255,255,255,0.06)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '12px',
-                color: 'var(--text-secondary)',
-                fontSize: '0.8rem',
-                opacity: 0.6,
+            {/* Group Info Card */}
+            <div className="glass glass-card animate-in" style={{ 
+                marginTop: '48px', 
+                padding: '24px',
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                flexWrap: 'wrap', 
+                gap: '24px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)'
             }}>
-                <span>{groupData?.name}</span>
-                {groupData?.inviteCode && (
-                    <span
-                        style={{ cursor: 'pointer', fontFamily: 'monospace', letterSpacing: '0.1em' }}
-                        title="Copiar código de convite"
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ 
+                        width: '48px', 
+                        height: '48px', 
+                        background: 'rgba(99, 102, 241, 0.15)', 
+                        borderRadius: '16px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        color: 'var(--primary)',
+                        boxShadow: '0 8px 16px -4px rgba(99, 102, 241, 0.2)'
+                    }}>
+                        <Home size={24} />
+                    </div>
+                    <div>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{groupData?.name}</h4>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Sparkles size={12} color="var(--primary)" /> Família Famask
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: '1', justifyContent: 'flex-end', minWidth: '200px' }}>
+                    <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 'bold' }}>Código de Convite</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', justifyContent: 'flex-end' }}>
+                            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+                                #{groupData?.inviteCode}
+                            </span>
+                        </div>
+                    </div>
+                    <button 
                         onClick={() => {
-                            navigator.clipboard.writeText(groupData.inviteCode);
-                            toast.success('Código copiado!');
+                            if (groupData?.inviteCode) {
+                                navigator.clipboard.writeText(groupData.inviteCode);
+                                toast.success('Código copiado!');
+                            }
                         }}
+                        className="btn btn-primary"
+                        style={{ 
+                            padding: '12px', 
+                            borderRadius: '14px',
+                            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                        }}
+                        title="Copiar Código"
                     >
-                        #{groupData.inviteCode}
-                    </span>
-                )}
-                <span>Famask</span>
-            </footer>
+                        <Copy size={20} />
+                    </button>
+                </div>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '32px', opacity: 0.3, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Famask &copy; 2026 • Feito com ❤️ para sua família
+            </div>
 
             {/* Custom Confirmation Modal */}
             {confirmModal.isOpen && (
